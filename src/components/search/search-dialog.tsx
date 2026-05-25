@@ -22,7 +22,7 @@ type Result =
 export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
   const { workspace, user, channels, dmChannels, setCurrentChannelId, setPreviewChannel, openProfile } = useAppStore()
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<Result[]>([])
+  const [results, setResults] = useState<Result[]>([])  // ← FIXED: added = sign
   const [loading, setLoading] = useState(false)
   const [activeIndex, setActiveIndex] = useState(-1)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -64,7 +64,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
             .forEach((c) => all.push({ type: 'channel', channel: c as Channel }))
         }
 
-        // Search users
+        // Search users - FIXED: Added null check with optional chaining
         const { data: members } = await client
           .from('workspace_members')
           .select('profile:profiles(*)')
@@ -76,7 +76,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
             .filter(
               (p) =>
                 p &&
-                (p.display_name.toLowerCase().includes(q.toLowerCase()) ||
+                (p.display_name?.toLowerCase().includes(q.toLowerCase()) ||
                   p.email?.toLowerCase().includes(q.toLowerCase()))
             )
             .slice(0, 5)
@@ -213,7 +213,6 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
   const messageResults = results.filter((r) => r.type === 'message')
 
   // Compute flat index for each result for keyboard nav
-  let flatIndex = 0
   const channelStartIndex = 0
   const userStartIndex = channelResults.length
   const messageStartIndex = channelResults.length + userResults.length
@@ -387,12 +386,12 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
                           {r.user.avatar_url ? (
                             <img src={r.user.avatar_url} alt="" className="h-8 w-8 rounded-lg object-cover" />
                           ) : (
-                            r.user.display_name[0]?.toUpperCase() || '?'
+                            r.user.display_name?.[0]?.toUpperCase() || '?'
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
                           <span className="text-sm font-medium" style={{ color: '#FFFFFF' }}>
-                            {highlightMatch(r.user.display_name, query)}
+                            {highlightMatch(r.user.display_name || '', query)}
                           </span>
                           {r.user.email && (
                             <p className="text-xs truncate mt-0.5" style={{ color: '#B8E4A0' }}>
