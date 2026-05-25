@@ -434,3 +434,4 @@ OpenHive is open-source software licensed under the [MIT License](LICENSE).
   Built with Next.js, Supabase & LiveKit<br/>
   <strong>Star the repo if you like the project!</strong>
 </p>
+
