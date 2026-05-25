@@ -1,17 +1,22 @@
-// Types for all 23 OpenHive database tables
+// ============================================
+// TELL TYPES – Includes new tell_number field
+// ============================================
 
 export interface Profile {
   id: string
-  email: string | null
-  display_name: string
+  email: string
+  tell_number: string          // ← sovereign identifier
+  display_name: string | null
   avatar_url: string | null
-  status_emoji: string | null
-  status_text: string | null
-  is_online: boolean
-  last_seen_at: string | null
+  status_emoji?: string | null
+  status_text?: string | null
+  is_online?: boolean
+  last_seen_at?: string | null
   created_at: string
 }
 
+// The rest of the types (Workspace, Channel, etc.) can remain unchanged,
+// but they are no longer used in the new dashboard. Keep them for reference.
 export interface Workspace {
   id: string
   name: string
@@ -61,7 +66,6 @@ export interface Message {
   metadata: Record<string, unknown> | null
   created_at: string
   updated_at: string
-  // Joined
   sender?: Profile
 }
 

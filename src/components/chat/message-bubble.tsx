@@ -10,10 +10,8 @@ import { useAppStore } from '@/lib/store/app-store'
 import { EmojiPicker, QUICK_REACTIONS } from './emoji-picker'
 import type { Message, Reaction } from '@/types/database'
 
-// Global cache for resolved mention display names (userId -> displayName)
 const mentionNameCache: Record<string, string> = {}
 
-// Render message content with markdown-like formatting
 function renderMessageContent(text: string, mentionNames?: Record<string, string>): string {
   let html = text
     .replace(/&/g, '&amp;')
@@ -72,12 +70,10 @@ export function MessageBubble({ message, showHeader, isOwn, isThread }: MessageB
   const time = formatDistanceToNow(new Date(message.created_at), { addSuffix: true })
   const messageReactions = reactions[message.id] || []
 
-  // Resolve @mention UUIDs to display names
   useEffect(() => {
     const uuids = [...message.content.matchAll(/@([a-f0-9-]{36})/g)].map((m) => m[1])
     if (uuids.length === 0) return
 
-    // Check cache first
     const uncached = uuids.filter((id) => !mentionNameCache[id])
     if (uncached.length === 0) {
       setMentionNames({ ...mentionNameCache })
@@ -180,18 +176,17 @@ export function MessageBubble({ message, showHeader, isOwn, isThread }: MessageB
   return (
     <div ref={containerRef}>
       <div
-        className={`relative flex gap-2.5 px-3 -mx-3 rounded-xl ${showHeader ? 'pt-2 py-1' : 'py-0.5'} ${showToolbar ? 'bg-[#F5F2FF]' : 'hover:bg-[#F5F2FF]'}`}
+        className={`relative flex gap-2.5 px-3 -mx-3 rounded-xl ${showHeader ? 'pt-2 py-1' : 'py-0.5'} ${showToolbar ? 'bg-[#4DA6FF20]' : 'hover:bg-[#4DA6FF20]'}`}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
-        {/* ACTION TOOLBAR */}
         {showToolbar && !editing && (
-          <div className="absolute top-0 right-2 flex items-center bg-white border border-[#E5E1EE] rounded-xl shadow-sm z-10 -translate-y-1/2">
+          <div className="absolute top-0 right-2 flex items-center border rounded-xl shadow-sm z-10 -translate-y-1/2" style={{ background: '#1A5E0A', borderColor: '#4DA6FF30' }}>
             {QUICK_REACTIONS.slice(0, 3).map((emoji) => (
               <button
                 key={emoji}
                 onClick={() => handleReaction(emoji)}
-                className="h-8 w-8 flex items-center justify-center hover:bg-[#F5F2FF] rounded-xl text-sm transition-colors"
+                className="h-8 w-8 flex items-center justify-center hover:bg-[#4DA6FF20] rounded-xl text-sm transition-colors"
                 title={`React with ${emoji}`}
               >
                 {emoji}
@@ -200,7 +195,8 @@ export function MessageBubble({ message, showHeader, isOwn, isThread }: MessageB
             <div className="relative">
               <button
                 onClick={() => { setShowEmojiPicker(!showEmojiPicker); setShowMoreMenu(false) }}
-                className="h-8 w-8 flex items-center justify-center hover:bg-[#F5F2FF] rounded-xl transition-colors text-[#8E8EA0]"
+                className="h-8 w-8 flex items-center justify-center hover:bg-[#4DA6FF20] rounded-xl transition-colors"
+                style={{ color: '#B8E4A0' }}
                 title="Add reaction"
               >
                 <Smile className="h-4 w-4" />
@@ -214,7 +210,8 @@ export function MessageBubble({ message, showHeader, isOwn, isThread }: MessageB
             {!isThread && (
               <button
                 onClick={() => openThread(message)}
-                className="h-8 w-8 flex items-center justify-center hover:bg-[#F5F2FF] rounded-xl transition-colors text-[#8E8EA0]"
+                className="h-8 w-8 flex items-center justify-center hover:bg-[#4DA6FF20] rounded-xl transition-colors"
+                style={{ color: '#B8E4A0' }}
                 title="Reply in thread"
               >
                 <MessageSquare className="h-4 w-4" />
@@ -247,8 +244,8 @@ export function MessageBubble({ message, showHeader, isOwn, isThread }: MessageB
                   setTimeout(() => setSaveError(false), 3000)
                 }
               }}
-              className={`h-8 w-8 flex items-center justify-center hover:bg-[#F5F2FF] rounded-xl transition-colors ${
-                savedItemIds.has(message.id) ? 'text-[#7C5CFC]' : 'text-[#8E8EA0]'
+              className={`h-8 w-8 flex items-center justify-center hover:bg-[#4DA6FF20] rounded-xl transition-colors ${
+                savedItemIds.has(message.id) ? 'text-[#4DA6FF]' : 'text-[#B8E4A0]'
               }`}
               title={savedItemIds.has(message.id) ? 'Remove from saved' : 'Save message'}
             >
@@ -262,17 +259,19 @@ export function MessageBubble({ message, showHeader, isOwn, isThread }: MessageB
             <div className="relative">
               <button
                 onClick={() => { setShowMoreMenu(!showMoreMenu); setShowEmojiPicker(false) }}
-                className="h-8 w-8 flex items-center justify-center hover:bg-[#F5F2FF] rounded-xl transition-colors text-[#8E8EA0]"
+                className="h-8 w-8 flex items-center justify-center hover:bg-[#4DA6FF20] rounded-xl transition-colors"
+                style={{ color: '#B8E4A0' }}
                 title="More actions"
               >
                 <MoreHorizontal className="h-4 w-4" />
               </button>
               {showMoreMenu && (
-                <div className="absolute right-0 top-9 bg-white border border-[#E5E1EE] rounded-xl shadow-lg py-1 min-w-[180px] z-50">
+                <div className="absolute right-0 top-9 border rounded-xl shadow-lg py-1 min-w-[180px] z-50" style={{ background: '#1A5E0A', borderColor: '#4DA6FF30' }}>
                   {isOwn && (
                     <button
                       onClick={() => { setEditing(true); setEditContent(message.content); setShowMoreMenu(false) }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-[#F5F2FF] text-left text-[#2D2B3D] rounded-lg mx-0"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-[#4DA6FF20] text-left rounded-lg"
+                      style={{ color: '#FFFFFF' }}
                     >
                       <Pencil className="h-3.5 w-3.5" /> Edit message
                     </button>
@@ -280,7 +279,8 @@ export function MessageBubble({ message, showHeader, isOwn, isThread }: MessageB
                   {!isThread && (
                     <button
                       onClick={() => { openThread(message); setShowMoreMenu(false) }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-[#F5F2FF] text-left text-[#2D2B3D] rounded-lg"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-[#4DA6FF20] text-left rounded-lg"
+                      style={{ color: '#FFFFFF' }}
                     >
                       <MessageSquare className="h-3.5 w-3.5" /> Reply in thread
                     </button>
@@ -288,7 +288,7 @@ export function MessageBubble({ message, showHeader, isOwn, isThread }: MessageB
                   {isOwn && (
                     <button
                       onClick={handleDelete}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-red-50 text-[#E55B5B] text-left rounded-lg"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-red-800 text-[#FF6B6B] text-left rounded-lg"
                     >
                       <Trash2 className="h-3.5 w-3.5" /> Delete message
                     </button>
@@ -299,7 +299,6 @@ export function MessageBubble({ message, showHeader, isOwn, isThread }: MessageB
           </div>
         )}
 
-        {/* AVATAR / TIMESTAMP */}
         {showHeader ? (
           <button
             onClick={() => message.sender_id && openProfile(message.sender_id)}
@@ -308,32 +307,31 @@ export function MessageBubble({ message, showHeader, isOwn, isThread }: MessageB
             {sender?.avatar_url ? (
               <img src={sender.avatar_url} alt={displayName} className="h-9 w-9 rounded-xl object-cover" />
             ) : (
-              <div className="h-9 w-9 rounded-xl flex items-center justify-center text-sm font-bold text-white" style={{ background: '#7C5CFC' }}>
+              <div className="h-9 w-9 rounded-xl flex items-center justify-center text-sm font-bold text-[#175507]" style={{ background: '#4DA6FF' }}>
                 {initial}
               </div>
             )}
           </button>
         ) : (
           <div className="w-9 shrink-0 flex items-center justify-center">
-            <span className={`text-[10px] text-[#8E8EA0] transition-opacity ${showToolbar ? 'opacity-100' : 'opacity-0'}`}>
+            <span className={`text-[10px] transition-opacity ${showToolbar ? 'opacity-100' : 'opacity-0'}`} style={{ color: '#B8E4A0' }}>
               {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </span>
           </div>
         )}
 
-        {/* CONTENT */}
         <div className="min-w-0 flex-1">
           {showHeader && (
             <div className="flex items-baseline gap-2">
               <button
                 onClick={() => message.sender_id && openProfile(message.sender_id)}
                 className="font-semibold text-[15px] hover:underline cursor-pointer"
-                style={{ color: '#2D2B3D' }}
+                style={{ color: '#FFFFFF' }}
               >
                 {displayName}
               </button>
-              <span className="text-xs" style={{ color: '#8E8EA0' }}>{time}</span>
-              {message.is_edited && <span className="text-xs italic" style={{ color: '#8E8EA0' }}>(edited)</span>}
+              <span className="text-xs" style={{ color: '#B8E4A0' }}>{time}</span>
+              {message.is_edited && <span className="text-xs italic" style={{ color: '#B8E4A0' }}>(edited)</span>}
             </div>
           )}
           {editing ? (
@@ -341,7 +339,8 @@ export function MessageBubble({ message, showHeader, isOwn, isThread }: MessageB
               <textarea
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
-                className="w-full text-[15px] bg-white rounded-xl p-3 border border-[#E5E1EE] focus:outline-none focus:ring-2 focus:ring-[#7C5CFC] focus:border-transparent"
+                className="w-full text-[15px] rounded-xl p-3 border focus:outline-none focus:ring-2 focus:ring-[#4DA6FF] focus:border-transparent"
+                style={{ background: '#0E3A05', borderColor: '#4DA6FF40', color: '#FFFFFF' }}
                 rows={2}
                 autoFocus
                 onKeyDown={(e) => {
@@ -351,20 +350,19 @@ export function MessageBubble({ message, showHeader, isOwn, isThread }: MessageB
               />
               <div className="flex gap-2 mt-1">
                 <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>Cancel</Button>
-                <Button size="sm" onClick={handleEdit} style={{ background: '#7C5CFC', color: '#fff' }}>Save</Button>
+                <Button size="sm" onClick={handleEdit} style={{ background: '#4DA6FF', color: '#175507' }}>Save</Button>
               </div>
             </div>
           ) : (
             <div
               className="text-[15px] leading-[1.5] whitespace-pre-wrap break-words message-content"
-              style={{ color: '#2D2B3D' }}
+              style={{ color: '#FFFFFF' }}
               dangerouslySetInnerHTML={{ __html: renderMessageContent(message.content, mentionNames) }}
             />
           )}
         </div>
       </div>
 
-      {/* REACTIONS */}
       {Object.keys(grouped).length > 0 && (
         <div className="flex flex-wrap gap-1 mt-1 ml-11">
           {Object.values(grouped).map((r) => (
@@ -373,8 +371,8 @@ export function MessageBubble({ message, showHeader, isOwn, isThread }: MessageB
               onClick={() => handleReaction(r.emoji)}
               className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-all ${
                 r.myReaction
-                  ? 'bg-[#EDE5FF] border-[#7C5CFC]/30 text-[#7C5CFC]'
-                  : 'bg-[#F5F2FF] border-[#E5E1EE] hover:border-[#DDD6F3]'
+                  ? 'bg-[#4DA6FF20] border-[#4DA6FF60] text-[#4DA6FF]'
+                  : 'bg-[#1A5E0A] border-[#4DA6FF30] hover:border-[#4DA6FF60]'
               }`}
             >
               <span>{r.emoji}</span>
@@ -383,19 +381,18 @@ export function MessageBubble({ message, showHeader, isOwn, isThread }: MessageB
           ))}
           <button
             onClick={() => setShowEmojiPicker(true)}
-            className="inline-flex items-center px-2 py-0.5 rounded-full text-xs border border-dashed border-[#DDD6F3] hover:border-[#7C5CFC] text-[#8E8EA0]"
+            className="inline-flex items-center px-2 py-0.5 rounded-full text-xs border border-dashed border-[#4DA6FF60] hover:border-[#4DA6FF] text-[#B8E4A0]"
           >
             <Smile className="h-3 w-3" />
           </button>
         </div>
       )}
 
-      {/* THREAD INDICATOR */}
       {!isThread && message.thread_reply_count > 0 && (
         <button
           onClick={() => openThread(message)}
           className="flex items-center gap-1.5 ml-11 mt-1 text-xs hover:underline font-semibold"
-          style={{ color: '#7C5CFC' }}
+          style={{ color: '#4DA6FF' }}
         >
           <MessageSquare className="h-3 w-3" />
           {message.thread_reply_count} {message.thread_reply_count === 1 ? 'reply' : 'replies'}

@@ -33,7 +33,6 @@ export function ProfileEditDialog({ open, onOpenChange }: ProfileEditDialogProps
   const [error, setError] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Load current user data when dialog opens
   useEffect(() => {
     if (open && user) {
       setDisplayName(user.display_name || '')
@@ -45,9 +44,6 @@ export function ProfileEditDialog({ open, onOpenChange }: ProfileEditDialogProps
     }
   }, [open, user])
 
-  /**
-   * Resize and compress an image file to max 500x500, output as JPEG.
-   */
   function compressImage(file: File, maxSize: number = 500, quality: number = 0.85): Promise<Blob> {
     return new Promise((resolve, reject) => {
       const img = new Image()
@@ -56,7 +52,6 @@ export function ProfileEditDialog({ open, onOpenChange }: ProfileEditDialogProps
         URL.revokeObjectURL(url)
         let { width, height } = img
 
-        // Scale down to fit within maxSize x maxSize, keeping aspect ratio
         if (width > maxSize || height > maxSize) {
           if (width > height) {
             height = Math.round((height / width) * maxSize)
@@ -91,13 +86,11 @@ export function ProfileEditDialog({ open, onOpenChange }: ProfileEditDialogProps
     const file = e.target.files?.[0]
     if (!file || !user) return
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       setError('Please select an image file')
       return
     }
 
-    // Accept up to 20MB raw — we'll compress it down
     if (file.size > 20 * 1024 * 1024) {
       setError('Image must be less than 20MB')
       return
@@ -107,22 +100,16 @@ export function ProfileEditDialog({ open, onOpenChange }: ProfileEditDialogProps
     setUploading(true)
 
     try {
-      // Compress and resize to max 500x500 JPEG
       const compressed = await compressImage(file, 500, 0.85)
-
-      // Create a preview from the compressed blob
       const previewUrl = URL.createObjectURL(compressed)
       setAvatarPreview(previewUrl)
 
-      // Upload via server-side API route (bypasses RLS)
       const path = `${user.id}.jpg`
-
       const formData = new FormData()
       formData.append('file', new File([compressed], `${user.id}.jpg`, { type: 'image/jpeg' }))
       formData.append('bucket', 'avatars')
       formData.append('path', path)
 
-      // Include auth header for server-side verification
       const authClient = getSupabaseClient()
       const authSession = authClient ? (await authClient.auth.getSession()).data.session : null
       const uploadHeaders: Record<string, string> = {}
@@ -137,13 +124,12 @@ export function ProfileEditDialog({ open, onOpenChange }: ProfileEditDialogProps
         throw new Error(data.error || 'Upload failed')
       }
 
-      // Add cache-busting param
       const newUrl = `${data.publicUrl}?t=${Date.now()}`
       setAvatarUrl(newUrl)
     } catch (err) {
       console.error('Upload failed:', err)
       setError(err instanceof Error ? err.message : 'Failed to upload image.')
-      setAvatarPreview(avatarUrl) // Revert preview
+      setAvatarPreview(avatarUrl)
     } finally {
       setUploading(false)
     }
@@ -167,7 +153,6 @@ export function ProfileEditDialog({ open, onOpenChange }: ProfileEditDialogProps
       const client = getSupabaseClient()
       if (!client) throw new Error('Not connected')
 
-      // Update profile in database
       const { error: updateError } = await client
         .from('profiles')
         .update({
@@ -180,12 +165,10 @@ export function ProfileEditDialog({ open, onOpenChange }: ProfileEditDialogProps
 
       if (updateError) throw updateError
 
-      // Update auth metadata
       await client.auth.updateUser({
         data: { display_name: displayName.trim() },
       })
 
-      // Update local store
       setUser({
         ...user,
         display_name: displayName.trim(),
@@ -204,22 +187,19 @@ export function ProfileEditDialog({ open, onOpenChange }: ProfileEditDialogProps
   }
 
   const initial = (displayName || user?.display_name || '?')[0]?.toUpperCase()
-
-  // Common status emojis
   const statusEmojis = ['😊', '🏠', '🎯', '🚀', '💤', '🏖️', '🤒', '📅', '🎉', '🔇']
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" style={{ background: '#1A5E0A', borderColor: '#4DA6FF30' }}>
         <DialogHeader>
-          <DialogTitle>Edit Profile</DialogTitle>
-          <DialogDescription>
+          <DialogTitle style={{ color: '#FFFFFF' }}>Edit Profile</DialogTitle>
+          <DialogDescription style={{ color: '#B8E4A0' }}>
             Update your profile information and photo
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5 py-2">
-          {/* Avatar */}
           <div className="flex flex-col items-center">
             <div className="relative group">
               {avatarPreview ? (
@@ -229,12 +209,11 @@ export function ProfileEditDialog({ open, onOpenChange }: ProfileEditDialogProps
                   className="h-24 w-24 rounded-2xl object-cover shadow-sm"
                 />
               ) : (
-                <div className="h-24 w-24 rounded-2xl flex items-center justify-center text-3xl font-bold text-white" style={{ background: '#7C5CFC' }}>
+                <div className="h-24 w-24 rounded-2xl flex items-center justify-center text-3xl font-bold text-[#175507]" style={{ background: '#4DA6FF' }}>
                   {initial}
                 </div>
               )}
 
-              {/* Upload overlay */}
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
@@ -247,12 +226,11 @@ export function ProfileEditDialog({ open, onOpenChange }: ProfileEditDialogProps
                 )}
               </button>
 
-              {/* Remove button */}
               {avatarPreview && (
                 <button
                   onClick={handleRemoveAvatar}
                   className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                  style={{ background: '#E55B5B' }}
+                  style={{ background: '#FF6B6B' }}
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -271,27 +249,26 @@ export function ProfileEditDialog({ open, onOpenChange }: ProfileEditDialogProps
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
               className="mt-2 text-xs hover:underline"
-              style={{ color: '#7C5CFC' }}
+              style={{ color: '#4DA6FF' }}
             >
               {uploading ? 'Uploading...' : 'Change photo'}
             </button>
           </div>
 
-          {/* Display name */}
           <div className="space-y-1.5">
-            <Label htmlFor="display-name">Display name</Label>
+            <Label htmlFor="display-name" style={{ color: '#FFFFFF' }}>Display name</Label>
             <Input
               id="display-name"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="Your name"
               maxLength={50}
+              style={{ background: '#0E3A05', borderColor: '#4DA6FF40', color: '#FFFFFF' }}
             />
           </div>
 
-          {/* Status */}
           <div className="space-y-1.5">
-            <Label>Status</Label>
+            <Label style={{ color: '#FFFFFF' }}>Status</Label>
             <div className="flex gap-2">
               <div className="relative">
                 <Input
@@ -299,6 +276,7 @@ export function ProfileEditDialog({ open, onOpenChange }: ProfileEditDialogProps
                   onChange={(e) => setStatusEmoji(e.target.value)}
                   placeholder="😊"
                   className="w-14 text-center text-lg"
+                  style={{ background: '#0E3A05', borderColor: '#4DA6FF40', color: '#FFFFFF' }}
                   maxLength={2}
                 />
               </div>
@@ -307,17 +285,17 @@ export function ProfileEditDialog({ open, onOpenChange }: ProfileEditDialogProps
                 onChange={(e) => setStatusText(e.target.value)}
                 placeholder="What's your status?"
                 className="flex-1"
+                style={{ background: '#0E3A05', borderColor: '#4DA6FF40', color: '#FFFFFF' }}
                 maxLength={100}
               />
             </div>
-            {/* Quick emoji picks */}
             <div className="flex gap-1 pt-1">
               {statusEmojis.map((emoji) => (
                 <button
                   key={emoji}
                   onClick={() => setStatusEmoji(emoji)}
                   className={`h-7 w-7 rounded-lg flex items-center justify-center text-sm transition-all ${
-                    statusEmoji === emoji ? 'bg-[#EDE5FF] ring-1 ring-[#7C5CFC]/30' : 'hover:bg-[#F5F2FF]'
+                    statusEmoji === emoji ? 'bg-[#4DA6FF20] ring-1 ring-[#4DA6FF]' : 'hover:bg-[#4DA6FF20]'
                   }`}
                 >
                   {emoji}
@@ -327,7 +305,7 @@ export function ProfileEditDialog({ open, onOpenChange }: ProfileEditDialogProps
           </div>
 
           {error && (
-            <p className="text-sm" style={{ color: '#E55B5B' }}>{error}</p>
+            <p className="text-sm" style={{ color: '#FF6B6B' }}>{error}</p>
           )}
         </div>
 
@@ -335,7 +313,7 @@ export function ProfileEditDialog({ open, onOpenChange }: ProfileEditDialogProps
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={saving || uploading} style={{ background: '#7C5CFC', color: '#fff' }}>
+          <Button onClick={handleSave} disabled={saving || uploading} style={{ background: '#4DA6FF', color: '#175507' }}>
             {saving ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />

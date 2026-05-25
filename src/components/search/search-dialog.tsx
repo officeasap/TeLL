@@ -192,7 +192,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
     onOpenChange(false)
   }
 
-  // Highlight matching text
+  // Highlight matching text – Tell style
   function highlightMatch(text: string, q: string) {
     if (!q.trim()) return text
     const idx = text.toLowerCase().indexOf(q.toLowerCase())
@@ -200,7 +200,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
     return (
       <>
         {text.slice(0, idx)}
-        <span className="bg-primary/15 text-primary font-semibold rounded-sm px-0.5">
+        <span className="bg-[#4DA6FF30] text-[#4DA6FF] font-semibold rounded-sm px-0.5">
           {text.slice(idx, idx + q.length)}
         </span>
         {text.slice(idx + q.length)}
@@ -223,20 +223,21 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden rounded-xl shadow-2xl border-border/50">
+      <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden rounded-xl shadow-2xl" style={{ background: '#1A5E0A', borderColor: '#4DA6FF30' }}>
         {/* Search input */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b bg-muted/30">
-          <Search className="h-5 w-5 text-muted-foreground/60 shrink-0" />
+        <div className="flex items-center gap-3 px-4 py-3 border-b" style={{ borderColor: '#4DA6FF30', background: '#0E3A05' }}>
+          <Search className="h-5 w-5 shrink-0" style={{ color: '#B8E4A0' }} />
           <input
             ref={inputRef}
             placeholder="Search messages, channels, people..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="flex-1 bg-transparent text-base outline-none placeholder:text-muted-foreground/50"
+            className="flex-1 bg-transparent text-base outline-none placeholder:text-[#B8E4A0]/50"
+            style={{ color: '#FFFFFF' }}
             autoFocus
           />
-          {loading && <Loader2 className="h-4 w-4 animate-spin text-primary/60" />}
+          {loading && <Loader2 className="h-4 w-4 animate-spin" style={{ color: '#4DA6FF' }} />}
         </div>
 
         {/* Results area */}
@@ -248,8 +249,8 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
               {recentChannels.length > 0 && (
                 <div className="mb-4">
                   <div className="flex items-center gap-2 mb-2.5">
-                    <Clock className="h-3.5 w-3.5 text-muted-foreground/50" />
-                    <span className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
+                    <Clock className="h-3.5 w-3.5" style={{ color: '#B8E4A0' }} />
+                    <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: '#B8E4A0' }}>
                       Recent
                     </span>
                   </div>
@@ -258,17 +259,17 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
                       <button
                         key={ch.id}
                         onClick={() => { setCurrentChannelId(ch.id); onOpenChange(false) }}
-                        className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-muted transition-colors text-left group"
+                        className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-[#4DA6FF20] transition-colors text-left group"
                       >
-                        <div className="h-7 w-7 rounded-md bg-primary/8 flex items-center justify-center">
+                        <div className="h-7 w-7 rounded-md bg-[#4DA6FF20] flex items-center justify-center">
                           {ch.is_private ? (
-                            <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                            <Lock className="h-3.5 w-3.5" style={{ color: '#B8E4A0' }} />
                           ) : (
-                            <Hash className="h-3.5 w-3.5 text-muted-foreground" />
+                            <Hash className="h-3.5 w-3.5" style={{ color: '#B8E4A0' }} />
                           )}
                         </div>
-                        <span className="text-sm font-medium">{ch.name}</span>
-                        <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/0 group-hover:text-muted-foreground/50 ml-auto transition-colors" />
+                        <span className="text-sm font-medium" style={{ color: '#FFFFFF' }}>{ch.name}</span>
+                        <ArrowRight className="h-3.5 w-3.5 ml-auto transition-colors" style={{ color: 'transparent' }} />
                       </button>
                     ))}
                   </div>
@@ -276,10 +277,10 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
               )}
 
               {/* Search tips */}
-              <div className="rounded-lg border border-dashed border-border/60 p-4 text-center">
-                <Sparkles className="mx-auto h-5 w-5 text-primary/40 mb-2" />
-                <p className="text-sm font-medium text-muted-foreground/80">Search your workspace</p>
-                <p className="text-xs text-muted-foreground/50 mt-1">
+              <div className="rounded-lg border border-dashed border-[#4DA6FF40] p-4 text-center">
+                <Sparkles className="mx-auto h-5 w-5 mb-2" style={{ color: '#4DA6FF' }} />
+                <p className="text-sm font-medium" style={{ color: '#FFFFFF' }}>Search your workspace</p>
+                <p className="text-xs mt-1" style={{ color: '#B8E4A0' }}>
                   Find messages, channels, and people
                 </p>
               </div>
@@ -287,11 +288,11 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
           ) : results.length === 0 && !loading ? (
             /* ===== NO RESULTS ===== */
             <div className="px-4 py-10 text-center">
-              <Search className="mx-auto h-8 w-8 text-muted-foreground/20 mb-3" />
-              <p className="text-sm font-medium text-muted-foreground/70">
+              <Search className="mx-auto h-8 w-8 mb-3" style={{ color: '#B8E4A0' }} />
+              <p className="text-sm font-medium" style={{ color: '#FFFFFF' }}>
                 No results for &quot;{query}&quot;
               </p>
-              <p className="text-xs text-muted-foreground/50 mt-1">
+              <p className="text-xs mt-1" style={{ color: '#B8E4A0' }}>
                 Try a different search term
               </p>
             </div>
@@ -302,11 +303,11 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
               {channelResults.length > 0 && (
                 <div className="mb-1">
                   <div className="flex items-center gap-2 px-4 py-2">
-                    <Hash className="h-3 w-3 text-muted-foreground/50" />
-                    <span className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
+                    <Hash className="h-3 w-3" style={{ color: '#B8E4A0' }} />
+                    <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: '#B8E4A0' }}>
                       Channels
                     </span>
-                    <span className="text-[11px] text-muted-foreground/40">{channelResults.length}</span>
+                    <span className="text-[11px]" style={{ color: '#4DA6FF' }}>{channelResults.length}</span>
                   </div>
                   {channelResults.map((r, i) => {
                     if (r.type !== 'channel') return null
@@ -319,32 +320,32 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
                         onMouseEnter={() => setActiveIndex(idx)}
                         className={cn(
                           'w-full flex items-center gap-3 px-4 py-2 transition-colors text-left group',
-                          activeIndex === idx ? 'bg-primary/8' : 'hover:bg-muted/60'
+                          activeIndex === idx ? 'bg-[#4DA6FF20]' : 'hover:bg-[#4DA6FF10]'
                         )}
                       >
                         <div className={cn(
                           'h-8 w-8 rounded-lg flex items-center justify-center shrink-0 transition-colors',
-                          activeIndex === idx ? 'bg-primary/15' : 'bg-muted'
+                          activeIndex === idx ? 'bg-[#4DA6FF40]' : 'bg-[#4DA6FF20]'
                         )}>
                           {r.channel.is_private ? (
-                            <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                            <Lock className="h-3.5 w-3.5" style={{ color: '#4DA6FF' }} />
                           ) : (
-                            <Hash className="h-4 w-4 text-muted-foreground" />
+                            <Hash className="h-4 w-4" style={{ color: '#4DA6FF' }} />
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <span className="text-sm font-medium">
+                          <span className="text-sm font-medium" style={{ color: '#FFFFFF' }}>
                             {highlightMatch(r.channel.name, query)}
                           </span>
                           {r.channel.description && (
-                            <p className="text-xs text-muted-foreground/60 truncate mt-0.5">
+                            <p className="text-xs truncate mt-0.5" style={{ color: '#B8E4A0' }}>
                               {r.channel.description}
                             </p>
                           )}
                         </div>
                         <ArrowRight className={cn(
                           'h-3.5 w-3.5 shrink-0 transition-all',
-                          activeIndex === idx ? 'text-primary/60 translate-x-0' : 'text-transparent -translate-x-1'
+                          activeIndex === idx ? 'text-[#4DA6FF] translate-x-0' : 'text-transparent -translate-x-1'
                         )} />
                       </button>
                     )
@@ -355,13 +356,13 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
               {/* Users */}
               {userResults.length > 0 && (
                 <div className="mb-1">
-                  {(channelResults.length > 0) && <div className="mx-4 border-t border-border/40 my-1" />}
+                  {(channelResults.length > 0) && <div className="mx-4 border-t border-[#4DA6FF30] my-1" />}
                   <div className="flex items-center gap-2 px-4 py-2">
-                    <User className="h-3 w-3 text-muted-foreground/50" />
-                    <span className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
+                    <User className="h-3 w-3" style={{ color: '#B8E4A0' }} />
+                    <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: '#B8E4A0' }}>
                       People
                     </span>
-                    <span className="text-[11px] text-muted-foreground/40">{userResults.length}</span>
+                    <span className="text-[11px]" style={{ color: '#4DA6FF' }}>{userResults.length}</span>
                   </div>
                   {userResults.map((r, i) => {
                     if (r.type !== 'user') return null
@@ -374,14 +375,14 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
                         onMouseEnter={() => setActiveIndex(idx)}
                         className={cn(
                           'w-full flex items-center gap-3 px-4 py-2 transition-colors text-left group',
-                          activeIndex === idx ? 'bg-primary/8' : 'hover:bg-muted/60'
+                          activeIndex === idx ? 'bg-[#4DA6FF20]' : 'hover:bg-[#4DA6FF10]'
                         )}
                       >
                         <div className={cn(
                           'h-8 w-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 transition-colors',
                           activeIndex === idx
-                            ? 'bg-primary/15 text-primary'
-                            : 'bg-primary/8 text-primary/70'
+                            ? 'bg-[#4DA6FF40] text-[#4DA6FF]'
+                            : 'bg-[#4DA6FF20] text-[#4DA6FF]'
                         )}>
                           {r.user.avatar_url ? (
                             <img src={r.user.avatar_url} alt="" className="h-8 w-8 rounded-lg object-cover" />
@@ -390,18 +391,18 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <span className="text-sm font-medium">
+                          <span className="text-sm font-medium" style={{ color: '#FFFFFF' }}>
                             {highlightMatch(r.user.display_name, query)}
                           </span>
                           {r.user.email && (
-                            <p className="text-xs text-muted-foreground/60 truncate mt-0.5">
+                            <p className="text-xs truncate mt-0.5" style={{ color: '#B8E4A0' }}>
                               {r.user.email}
                             </p>
                           )}
                         </div>
                         <div className={cn(
                           'h-2 w-2 rounded-full shrink-0',
-                          r.user.is_online ? 'bg-green-500' : 'bg-muted-foreground/20'
+                          r.user.is_online ? 'bg-green-500' : 'bg-gray-500'
                         )} />
                       </button>
                     )
@@ -413,14 +414,14 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
               {messageResults.length > 0 && (
                 <div>
                   {(channelResults.length > 0 || userResults.length > 0) && (
-                    <div className="mx-4 border-t border-border/40 my-1" />
+                    <div className="mx-4 border-t border-[#4DA6FF30] my-1" />
                   )}
                   <div className="flex items-center gap-2 px-4 py-2">
-                    <MessageSquare className="h-3 w-3 text-muted-foreground/50" />
-                    <span className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
+                    <MessageSquare className="h-3 w-3" style={{ color: '#B8E4A0' }} />
+                    <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: '#B8E4A0' }}>
                       Messages
                     </span>
-                    <span className="text-[11px] text-muted-foreground/40">{messageResults.length}</span>
+                    <span className="text-[11px]" style={{ color: '#4DA6FF' }}>{messageResults.length}</span>
                   </div>
                   {messageResults.map((r, i) => {
                     if (r.type !== 'message') return null
@@ -434,14 +435,14 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
                         onMouseEnter={() => setActiveIndex(idx)}
                         className={cn(
                           'w-full flex items-start gap-3 px-4 py-2.5 transition-colors text-left group',
-                          activeIndex === idx ? 'bg-primary/8' : 'hover:bg-muted/60'
+                          activeIndex === idx ? 'bg-[#4DA6FF20]' : 'hover:bg-[#4DA6FF10]'
                         )}
                       >
                         <div className={cn(
                           'h-8 w-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 mt-0.5 transition-colors',
                           activeIndex === idx
-                            ? 'bg-primary/15 text-primary'
-                            : 'bg-primary/8 text-primary/70'
+                            ? 'bg-[#4DA6FF40] text-[#4DA6FF]'
+                            : 'bg-[#4DA6FF20] text-[#4DA6FF]'
                         )}>
                           {m.sender?.avatar_url ? (
                             <img src={m.sender.avatar_url} alt="" className="h-8 w-8 rounded-lg object-cover" />
@@ -451,17 +452,17 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold">
+                            <span className="text-sm font-semibold" style={{ color: '#FFFFFF' }}>
                               {m.sender?.display_name || 'Unknown'}
                             </span>
-                            <span className="text-[11px] text-muted-foreground/50">
+                            <span className="text-[11px]" style={{ color: '#B8E4A0' }}>
                               in #{m.channel_name}
                             </span>
-                            <span className="text-[11px] text-muted-foreground/40 ml-auto shrink-0">
+                            <span className="text-[11px] ml-auto shrink-0" style={{ color: '#B8E4A0' }}>
                               {formatDistanceToNow(new Date(m.created_at), { addSuffix: true })}
                             </span>
                           </div>
-                          <p className="text-sm text-muted-foreground/70 truncate mt-0.5">
+                          <p className="text-sm truncate mt-0.5" style={{ color: '#B8E4A0' }}>
                             {highlightMatch(m.content, query)}
                           </p>
                         </div>
@@ -475,19 +476,19 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
         </div>
 
         {/* Footer */}
-        <div className="border-t border-border/40 bg-muted/20 px-4 py-2 flex items-center gap-4 text-[11px] text-muted-foreground/50">
+        <div className="border-t px-4 py-2 flex items-center gap-4 text-[11px]" style={{ borderColor: '#4DA6FF30', background: '#0E3A05' }}>
           <div className="flex items-center gap-1.5">
-            <kbd className="h-4 min-w-4 px-1 rounded bg-muted text-[10px] font-mono flex items-center justify-center border border-border/50">↑</kbd>
-            <kbd className="h-4 min-w-4 px-1 rounded bg-muted text-[10px] font-mono flex items-center justify-center border border-border/50">↓</kbd>
-            <span>navigate</span>
+            <kbd className="h-4 min-w-4 px-1 rounded bg-[#1A5E0A] text-[10px] font-mono flex items-center justify-center border border-[#4DA6FF40]" style={{ color: '#B8E4A0' }}>↑</kbd>
+            <kbd className="h-4 min-w-4 px-1 rounded bg-[#1A5E0A] text-[10px] font-mono flex items-center justify-center border border-[#4DA6FF40]" style={{ color: '#B8E4A0' }}>↓</kbd>
+            <span style={{ color: '#B8E4A0' }}>navigate</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <kbd className="h-4 min-w-4 px-1 rounded bg-muted text-[10px] font-mono flex items-center justify-center border border-border/50">↵</kbd>
-            <span>open</span>
+            <kbd className="h-4 min-w-4 px-1 rounded bg-[#1A5E0A] text-[10px] font-mono flex items-center justify-center border border-[#4DA6FF40]" style={{ color: '#B8E4A0' }}>↵</kbd>
+            <span style={{ color: '#B8E4A0' }}>open</span>
           </div>
           <div className="flex items-center gap-1.5 ml-auto">
-            <kbd className="h-4 min-w-4 px-1 rounded bg-muted text-[10px] font-mono flex items-center justify-center border border-border/50">esc</kbd>
-            <span>close</span>
+            <kbd className="h-4 min-w-4 px-1 rounded bg-[#1A5E0A] text-[10px] font-mono flex items-center justify-center border border-[#4DA6FF40]" style={{ color: '#B8E4A0' }}>esc</kbd>
+            <span style={{ color: '#B8E4A0' }}>close</span>
           </div>
         </div>
       </DialogContent>

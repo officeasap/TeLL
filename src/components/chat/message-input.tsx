@@ -21,7 +21,6 @@ interface MessageInputProps {
   placeholder?: string
 }
 
-// Convert TipTap HTML to our storage format (simplified markdown-like)
 function htmlToContent(html: string): string {
   const div = document.createElement('div')
   div.innerHTML = html
@@ -50,7 +49,6 @@ function htmlToContent(html: string): string {
       case 'br':
         return '\n'
       case 'span':
-        // Handle mentions
         if (el.dataset.type === 'mention') {
           return `@${el.dataset.id || children}`
         }
@@ -79,24 +77,20 @@ export function MessageInput({ channelId, channelName, onSend, placeholder }: Me
   const [scheduleOpen, setScheduleOpen] = useState(false)
   const [showSendMenu, setShowSendMenu] = useState(false)
 
-  // Keep ref in sync with state so TipTap suggestion callback always sees latest
   useEffect(() => {
     membersRef.current = members
   }, [members])
 
-  // Keep slash picker ref in sync
   useEffect(() => {
     showSlashPickerRef.current = showSlashPicker
   }, [showSlashPicker])
 
-  // Load channel members (or workspace members as fallback) for @mentions
   useEffect(() => {
     const client = getSupabaseClient()
     if (!client || !workspace) return
 
     async function loadMembers() {
       if (channelId) {
-        // Load members of the current channel
         const { data } = await client!
           .from('channel_members')
           .select('profile:profiles(*)')
@@ -111,7 +105,6 @@ export function MessageInput({ channelId, channelName, onSend, placeholder }: Me
         }
       }
 
-      // Fallback: load all workspace members
       const { data } = await client!
         .from('workspace_members')
         .select('profile:profiles(*)')
@@ -128,14 +121,12 @@ export function MessageInput({ channelId, channelName, onSend, placeholder }: Me
     loadMembers()
   }, [workspace, channelId])
 
-  // Custom Enter key extension
   const EnterSubmit = Extension.create({
     name: 'enterSubmit',
     addKeyboardShortcuts() {
       return {
         Enter: ({ editor }) => {
-          // Shift+Enter for newline
-          return false // let default handle, we check in onKeyDown
+          return false
         },
       }
     },
@@ -166,15 +157,12 @@ export function MessageInput({ channelId, channelName, onSend, placeholder }: Me
               )
               .slice(0, 8)
           },
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           render: () => {
             let popup: HTMLDivElement | null = null
             let selectedIndex = 0
             let items: Profile[] = []
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             let command: any = null
 
-            // SECURITY: Escape HTML entities to prevent XSS via display names
             function escapeHtml(str: string): string {
               return str
                 .replace(/&/g, '&amp;')
@@ -212,7 +200,6 @@ export function MessageInput({ channelId, channelName, onSend, placeholder }: Me
             }
 
             return {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               onStart: (props: any) => {
                 items = props.items
                 command = props.command
@@ -232,7 +219,6 @@ export function MessageInput({ channelId, channelName, onSend, placeholder }: Me
                   }
                 }
               },
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               onUpdate: (props: any) => {
                 items = props.items
                 selectedIndex = 0
@@ -246,7 +232,6 @@ export function MessageInput({ channelId, channelName, onSend, placeholder }: Me
                   }
                 }
               },
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               onKeyDown: (props: any) => {
                 if (props.event.key === 'ArrowUp') {
                   selectedIndex = (selectedIndex - 1 + items.length) % items.length
@@ -283,7 +268,6 @@ export function MessageInput({ channelId, channelName, onSend, placeholder }: Me
       if (text.startsWith('/') && !text.includes(' ')) {
         setSlashQuery(text)
         setShowSlashPicker(true)
-        // Position the picker above the input
         const editorEl = editor.view.dom.closest('.rounded-2xl')
         if (editorEl) {
           const rect = editorEl.getBoundingClientRect()
@@ -299,11 +283,9 @@ export function MessageInput({ channelId, channelName, onSend, placeholder }: Me
       },
       handleKeyDown: (_view, event) => {
         if (event.key === 'Enter' && !event.shiftKey) {
-          // Check if mention popup is open
           const mentionPopup = document.querySelector('.mention-popup')
-          if (mentionPopup) return false // Let mention handle it
+          if (mentionPopup) return false
 
-          // Don't submit if slash picker is open (handled by picker's keydown)
           if (showSlashPickerRef.current) {
             return false
           }
@@ -319,7 +301,6 @@ export function MessageInput({ channelId, channelName, onSend, placeholder }: Me
     immediatelyRender: false,
   })
 
-  // Update placeholder when prop changes
   useEffect(() => {
     if (editor) {
       editor.extensionManager.extensions
@@ -338,7 +319,6 @@ export function MessageInput({ channelId, channelName, onSend, placeholder }: Me
     const content = htmlToContent(html)
     if (!content.trim() && attachments.length === 0) return
 
-    // Build final content with attachments
     let finalContent = content
     if (attachments.length > 0) {
       const fileLines = attachments.map((a) => `📎 [${a.name}](${a.url})`).join('\n')
@@ -361,20 +341,16 @@ export function MessageInput({ channelId, channelName, onSend, placeholder }: Me
     setShowSlashPicker(false)
 
     if ('handler' in command) {
-      // Built-in command
       const currentText = editor.getText()
       const args = currentText.slice(command.command.length).trim()
       const result = command.handler(args)
 
       if (result.type === 'replace') {
         editor.commands.clearContent()
-        // Set the content and send
         editor.commands.setContent(`<p>${result.text}</p>`)
-        // Auto-send
         setTimeout(() => handleSend(), 50)
       }
     } else {
-      // Custom slash command (from DB) - send as is for now
       const text = `/${command.command}`
       editor.commands.clearContent()
       editor.commands.setContent(`<p>${text}</p>`)
@@ -382,12 +358,10 @@ export function MessageInput({ channelId, channelName, onSend, placeholder }: Me
     }
   }
 
-  // File upload handler — uses server-side API route to bypass RLS
   async function uploadFiles(files: FileList | File[]) {
     setUploading(true)
     const newAttachments: { name: string; url: string }[] = []
 
-    // Get auth session for upload authentication
     const client = getSupabaseClient()
     const session = client ? (await client.auth.getSession()).data.session : null
 
@@ -425,7 +399,6 @@ export function MessageInput({ channelId, channelName, onSend, placeholder }: Me
     setUploading(false)
   }
 
-  // Drag & drop
   const dragCounterRef = useRef(0)
 
   function handleDragEnter(e: React.DragEvent) {
@@ -467,36 +440,33 @@ export function MessageInput({ channelId, channelName, onSend, placeholder }: Me
     <div className="px-5 pb-4 pt-2">
       <div
         className={`rounded-2xl transition-all ${
-          isDragging ? 'border-2 border-[#7C5CFC] bg-[#EDE5FF]' : 'border border-[#E5E1EE] shadow-sm'
+          isDragging ? 'border-2 border-[#4DA6FF] bg-[#4DA6FF20]' : 'border border-[#4DA6FF30] shadow-sm'
         }`}
-        style={{ background: isDragging ? undefined : '#fff' }}
+        style={{ background: isDragging ? undefined : '#0E3A05' }}
         onDragEnter={handleDragEnter}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        {/* Drag overlay */}
         {isDragging && (
-          <div className="px-4 py-6 text-center text-sm font-medium" style={{ color: '#7C5CFC' }}>
+          <div className="px-4 py-6 text-center text-sm font-medium" style={{ color: '#4DA6FF' }}>
             Drop files here to upload
           </div>
         )}
 
-        {/* Editor area */}
         {!isDragging && (
           <>
             <div className="px-4 pt-3 pb-1">
               <EditorContent editor={editor} />
             </div>
 
-            {/* Attachments preview */}
             {attachments.length > 0 && (
               <div className="px-4 pb-1 flex flex-wrap gap-2">
                 {attachments.map((a, i) => (
                   <div
                     key={i}
                     className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs"
-                    style={{ background: '#F5F2FF', color: '#4A4860' }}
+                    style={{ background: '#4DA6FF20', color: '#FFFFFF' }}
                   >
                     <Paperclip className="h-3 w-3" />
                     <span className="truncate max-w-[150px]">{a.name}</span>
@@ -504,8 +474,8 @@ export function MessageInput({ channelId, channelName, onSend, placeholder }: Me
                       onClick={() =>
                         setAttachments((prev) => prev.filter((_, j) => j !== i))
                       }
-                      className="hover:text-[#E55B5B] ml-1 transition-colors"
-                      style={{ color: '#8E8EA0' }}
+                      className="hover:text-[#FF6B6B] ml-1 transition-colors"
+                      style={{ color: '#B8E4A0' }}
                     >
                       ×
                     </button>
@@ -514,14 +484,13 @@ export function MessageInput({ channelId, channelName, onSend, placeholder }: Me
               </div>
             )}
 
-            {/* Toolbar */}
             <div className="px-2 pb-2 flex items-center justify-between">
               <div className="flex items-center gap-0.5">
                 <button
                   className={`h-7 w-7 rounded-lg flex items-center justify-center transition-all ${
                     editor?.isActive('bold')
-                      ? 'text-[#7C5CFC] bg-[#EDE5FF]'
-                      : 'text-[#8E8EA0] hover:text-[#2D2B3D] hover:bg-[#F5F2FF]'
+                      ? 'text-[#4DA6FF] bg-[#4DA6FF20]'
+                      : 'text-[#B8E4A0] hover:text-[#FFFFFF] hover:bg-[#4DA6FF20]'
                   }`}
                   onClick={() => editor?.chain().focus().toggleBold().run()}
                   title="Bold (Ctrl+B)"
@@ -531,8 +500,8 @@ export function MessageInput({ channelId, channelName, onSend, placeholder }: Me
                 <button
                   className={`h-7 w-7 rounded-lg flex items-center justify-center transition-all ${
                     editor?.isActive('italic')
-                      ? 'text-[#7C5CFC] bg-[#EDE5FF]'
-                      : 'text-[#8E8EA0] hover:text-[#2D2B3D] hover:bg-[#F5F2FF]'
+                      ? 'text-[#4DA6FF] bg-[#4DA6FF20]'
+                      : 'text-[#B8E4A0] hover:text-[#FFFFFF] hover:bg-[#4DA6FF20]'
                   }`}
                   onClick={() => editor?.chain().focus().toggleItalic().run()}
                   title="Italic (Ctrl+I)"
@@ -542,8 +511,8 @@ export function MessageInput({ channelId, channelName, onSend, placeholder }: Me
                 <button
                   className={`h-7 w-7 rounded-lg flex items-center justify-center transition-all ${
                     editor?.isActive('code')
-                      ? 'text-[#7C5CFC] bg-[#EDE5FF]'
-                      : 'text-[#8E8EA0] hover:text-[#2D2B3D] hover:bg-[#F5F2FF]'
+                      ? 'text-[#4DA6FF] bg-[#4DA6FF20]'
+                      : 'text-[#B8E4A0] hover:text-[#FFFFFF] hover:bg-[#4DA6FF20]'
                   }`}
                   onClick={() => editor?.chain().focus().toggleCode().run()}
                   title="Inline code"
@@ -553,17 +522,17 @@ export function MessageInput({ channelId, channelName, onSend, placeholder }: Me
                 <button
                   className={`h-7 w-7 rounded-lg flex items-center justify-center transition-all ${
                     editor?.isActive('codeBlock')
-                      ? 'text-[#7C5CFC] bg-[#EDE5FF]'
-                      : 'text-[#8E8EA0] hover:text-[#2D2B3D] hover:bg-[#F5F2FF]'
+                      ? 'text-[#4DA6FF] bg-[#4DA6FF20]'
+                      : 'text-[#B8E4A0] hover:text-[#FFFFFF] hover:bg-[#4DA6FF20]'
                   }`}
                   onClick={() => editor?.chain().focus().toggleCodeBlock().run()}
                   title="Code block"
                 >
                   <CodeSquare className="h-4 w-4" />
                 </button>
-                <div className="w-px h-4 mx-1" style={{ background: '#E5E1EE' }} />
+                <div className="w-px h-4 mx-1" style={{ background: '#4DA6FF30' }} />
                 <button
-                  className="h-7 w-7 rounded-lg flex items-center justify-center transition-all text-[#8E8EA0] hover:text-[#2D2B3D] hover:bg-[#F5F2FF]"
+                  className="h-7 w-7 rounded-lg flex items-center justify-center transition-all text-[#B8E4A0] hover:text-[#FFFFFF] hover:bg-[#4DA6FF20]"
                   onClick={() => fileInputRef.current?.click()}
                   title="Attach file"
                   disabled={uploading}
@@ -575,8 +544,8 @@ export function MessageInput({ channelId, channelName, onSend, placeholder }: Me
                 <button
                   className={`h-8 w-8 rounded-l-xl flex items-center justify-center transition-all ${
                     isEmpty || sending
-                      ? 'text-[#DDD6F3] cursor-not-allowed'
-                      : 'bg-[#7C5CFC] text-white hover:bg-[#6B4EE6] shadow-sm'
+                      ? 'text-[#4DA6FF60] cursor-not-allowed'
+                      : 'bg-[#4DA6FF] text-[#175507] hover:bg-[#3A96FF] shadow-sm'
                   }`}
                   disabled={isEmpty || sending}
                   onClick={handleSend}
@@ -587,8 +556,8 @@ export function MessageInput({ channelId, channelName, onSend, placeholder }: Me
                   <button
                     className={`h-8 w-5 rounded-r-xl flex items-center justify-center transition-all border-l ${
                       isEmpty || sending
-                        ? 'text-[#DDD6F3] cursor-not-allowed border-[#E5E1EE]'
-                        : 'bg-[#7C5CFC] text-white hover:bg-[#6B4EE6] shadow-sm border-[#6B4EE6]'
+                        ? 'text-[#4DA6FF60] cursor-not-allowed border-[#4DA6FF30]'
+                        : 'bg-[#4DA6FF] text-[#175507] hover:bg-[#3A96FF] shadow-sm border-[#3A96FF]'
                     }`}
                     disabled={isEmpty || sending}
                     onClick={() => setShowSendMenu(!showSendMenu)}
@@ -596,15 +565,16 @@ export function MessageInput({ channelId, channelName, onSend, placeholder }: Me
                     <ChevronUp className="h-3 w-3" />
                   </button>
                   {showSendMenu && (
-                    <div className="absolute bottom-full right-0 mb-1 py-1 min-w-[180px] rounded-xl border bg-white shadow-lg" style={{ borderColor: '#E5E1EE' }}>
+                    <div className="absolute bottom-full right-0 mb-1 py-1 min-w-[180px] rounded-xl border shadow-lg" style={{ background: '#1A5E0A', borderColor: '#4DA6FF30' }}>
                       <button
                         onClick={() => {
                           setShowSendMenu(false)
                           setScheduleOpen(true)
                         }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-[#F5F2FF] text-left text-[#2D2B3D]"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-[#4DA6FF20] text-left"
+                        style={{ color: '#FFFFFF' }}
                       >
-                        <Clock className="h-3.5 w-3.5" style={{ color: '#7C5CFC' }} />
+                        <Clock className="h-3.5 w-3.5" style={{ color: '#4DA6FF' }} />
                         Schedule message
                       </button>
                     </div>
@@ -636,7 +606,6 @@ export function MessageInput({ channelId, channelName, onSend, placeholder }: Me
         }}
       />
 
-      {/* Hidden file input */}
       <input
         ref={fileInputRef}
         type="file"

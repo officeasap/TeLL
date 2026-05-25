@@ -142,23 +142,23 @@ export function SavedItemsPanel({ open, onClose }: SavedItemsPanelProps) {
       <div className="absolute inset-0 bg-black/20" onClick={onClose} />
 
       {/* Panel */}
-      <div className="relative ml-auto w-full max-w-md bg-white shadow-xl flex flex-col h-full">
+      <div className="relative ml-auto w-full max-w-md bg-[#1A5E0A] shadow-xl flex flex-col h-full" style={{ borderLeft: '1px solid #4DA6FF30' }}>
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 shrink-0" style={{ borderBottom: '1px solid #E5E1EE' }}>
+        <div className="flex items-center justify-between px-5 py-4 shrink-0" style={{ borderBottom: '1px solid #4DA6FF30' }}>
           <div className="flex items-center gap-2">
-            <Bookmark className="h-5 w-5" style={{ color: '#7C5CFC' }} />
-            <h2 className="font-bold text-[17px]" style={{ color: '#2D2B3D' }}>Saved Items</h2>
+            <Bookmark className="h-5 w-5" style={{ color: '#4DA6FF' }} />
+            <h2 className="font-bold text-[17px]" style={{ color: '#FFFFFF' }}>Saved Items</h2>
             {savedItems.length > 0 && (
-              <span className="text-xs px-1.5 py-0.5 rounded-full font-medium" style={{ background: '#EDE5FF', color: '#7C5CFC' }}>
+              <span className="text-xs px-1.5 py-0.5 rounded-full font-medium" style={{ background: '#4DA6FF20', color: '#4DA6FF' }}>
                 {savedItems.length}
               </span>
             )}
           </div>
           <button
             onClick={onClose}
-            className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-[#F5F2FF] transition-colors"
+            className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-[#4DA6FF20] transition-colors"
           >
-            <X className="h-4 w-4" style={{ color: '#8E8EA0' }} />
+            <X className="h-4 w-4" style={{ color: '#B8E4A0' }} />
           </button>
         </div>
 
@@ -166,18 +166,18 @@ export function SavedItemsPanel({ open, onClose }: SavedItemsPanelProps) {
         <div className="flex-1 overflow-y-auto">
           {loadError ? (
             <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-              <div className="h-14 w-14 rounded-2xl flex items-center justify-center mb-4" style={{ background: '#FEE2E2' }}>
-                <Bookmark className="h-7 w-7" style={{ color: '#E55B5B' }} />
+              <div className="h-14 w-14 rounded-2xl flex items-center justify-center mb-4" style={{ background: '#FF6B6B20' }}>
+                <Bookmark className="h-7 w-7" style={{ color: '#FF6B6B' }} />
               </div>
-              <h3 className="text-base font-bold mb-1" style={{ color: '#2D2B3D' }}>Database update needed</h3>
-              <p className="text-sm mb-4" style={{ color: '#8E8EA0' }}>
+              <h3 className="text-base font-bold mb-1" style={{ color: '#FFFFFF' }}>Database update needed</h3>
+              <p className="text-sm mb-4" style={{ color: '#B8E4A0' }}>
                 The saved_items table is missing. Click below to create it using your Supabase access token.
               </p>
 
               {showFix ? (
                 <div className="w-full max-w-xs space-y-3">
                   <div>
-                    <label className="text-[11px] font-medium mb-1 block text-left" style={{ color: '#4A4860' }}>
+                    <label className="text-[11px] font-medium mb-1 block text-left" style={{ color: '#B8E4A0' }}>
                       Supabase Personal Access Token
                     </label>
                     <input
@@ -185,42 +185,42 @@ export function SavedItemsPanel({ open, onClose }: SavedItemsPanelProps) {
                       value={pat}
                       onChange={(e) => setPat(e.target.value)}
                       placeholder="sbp_..."
-                      className="w-full h-9 px-3 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]"
-                      style={{ borderColor: '#E5E1EE' }}
+                      className="w-full h-9 px-3 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#4DA6FF]"
+                      style={{ background: '#0E3A05', borderColor: '#4DA6FF40', color: '#FFFFFF' }}
                       onKeyDown={(e) => { if (e.key === 'Enter') handleFix() }}
                       autoFocus
                     />
-                    <p className="text-[10px] mt-1 text-left" style={{ color: '#8E8EA0' }}>
+                    <p className="text-[10px] mt-1 text-left" style={{ color: '#B8E4A0' }}>
                       Get it from{' '}
                       <a
                         href="https://supabase.com/dashboard/account/tokens"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="underline"
-                        style={{ color: '#7C5CFC' }}
+                        style={{ color: '#4DA6FF' }}
                       >
                         supabase.com/dashboard/account/tokens
                       </a>
                     </p>
                   </div>
                   {fixError && (
-                    <p className="text-xs p-2 rounded-lg" style={{ background: '#FEE2E2', color: '#E55B5B' }}>
+                    <p className="text-xs p-2 rounded-lg" style={{ background: '#FF6B6B20', color: '#FF6B6B' }}>
                       {fixError}
                     </p>
                   )}
                   <div className="flex gap-2">
                     <button
                       onClick={() => { setShowFix(false); setFixError(null) }}
-                      className="flex-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors hover:bg-gray-50"
-                      style={{ borderColor: '#E5E1EE', color: '#8E8EA0' }}
+                      className="flex-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors hover:bg-[#4DA6FF20]"
+                      style={{ borderColor: '#4DA6FF40', color: '#B8E4A0' }}
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleFix}
                       disabled={fixing || !pat.trim()}
-                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-white transition-colors disabled:opacity-50"
-                      style={{ background: '#7C5CFC' }}
+                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-[#175507] transition-colors disabled:opacity-50"
+                      style={{ background: '#4DA6FF' }}
                     >
                       {fixing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wrench className="h-3.5 w-3.5" />}
                       {fixing ? 'Creating...' : 'Create table'}
@@ -230,8 +230,8 @@ export function SavedItemsPanel({ open, onClose }: SavedItemsPanelProps) {
               ) : (
                 <button
                   onClick={() => setShowFix(true)}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-white transition-colors hover:opacity-90"
-                  style={{ background: '#7C5CFC' }}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-[#175507] transition-colors hover:opacity-90"
+                  style={{ background: '#4DA6FF' }}
                 >
                   <Wrench className="h-4 w-4" />
                   Fix now
@@ -240,16 +240,16 @@ export function SavedItemsPanel({ open, onClose }: SavedItemsPanelProps) {
             </div>
           ) : loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-5 w-5 animate-spin mr-2" style={{ color: '#7C5CFC' }} />
-              <span style={{ color: '#8E8EA0' }}>Loading saved items...</span>
+              <Loader2 className="h-5 w-5 animate-spin mr-2" style={{ color: '#4DA6FF' }} />
+              <span style={{ color: '#B8E4A0' }}>Loading saved items...</span>
             </div>
           ) : savedItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-              <div className="h-14 w-14 rounded-2xl flex items-center justify-center mb-4" style={{ background: '#EDE5FF' }}>
-                <Bookmark className="h-7 w-7" style={{ color: '#7C5CFC' }} />
+              <div className="h-14 w-14 rounded-2xl flex items-center justify-center mb-4" style={{ background: '#4DA6FF20' }}>
+                <Bookmark className="h-7 w-7" style={{ color: '#4DA6FF' }} />
               </div>
-              <h3 className="text-base font-bold mb-1" style={{ color: '#2D2B3D' }}>No saved items yet</h3>
-              <p className="text-sm" style={{ color: '#8E8EA0' }}>
+              <h3 className="text-base font-bold mb-1" style={{ color: '#FFFFFF' }}>No saved items yet</h3>
+              <p className="text-sm" style={{ color: '#B8E4A0' }}>
                 Click the bookmark icon on any message to save it here for later.
               </p>
             </div>
@@ -266,33 +266,33 @@ export function SavedItemsPanel({ open, onClose }: SavedItemsPanelProps) {
                 return (
                   <div
                     key={item.id}
-                    className="group px-5 py-3 hover:bg-[#F5F2FF] transition-colors cursor-pointer"
+                    className="group px-5 py-3 hover:bg-[#4DA6FF20] transition-colors cursor-pointer"
                     onClick={() => handleGoToMessage(item)}
                   >
                     <div className="flex items-start gap-2.5">
                       {sender?.avatar_url ? (
                         <img src={sender.avatar_url} alt={displayName} className="h-8 w-8 rounded-xl object-cover shrink-0" />
                       ) : (
-                        <div className="h-8 w-8 rounded-xl flex items-center justify-center text-xs font-bold text-white shrink-0" style={{ background: '#7C5CFC' }}>
+                        <div className="h-8 w-8 rounded-xl flex items-center justify-center text-xs font-bold text-[#175507] shrink-0" style={{ background: '#4DA6FF' }}>
                           {initial}
                         </div>
                       )}
 
                       <div className="min-w-0 flex-1">
                         <div className="flex items-baseline gap-2">
-                          <span className="font-semibold text-[14px]" style={{ color: '#2D2B3D' }}>
+                          <span className="font-semibold text-[14px]" style={{ color: '#FFFFFF' }}>
                             {displayName}
                           </span>
-                          <span className="text-[11px]" style={{ color: '#8E8EA0' }}>{time}</span>
+                          <span className="text-[11px]" style={{ color: '#B8E4A0' }}>{time}</span>
                         </div>
                         <p
                           className="text-[14px] leading-[1.4] mt-0.5 line-clamp-3"
-                          style={{ color: '#4A4860' }}
+                          style={{ color: '#B8E4A0' }}
                         >
                           {msg.content}
                         </p>
                         <div className="flex items-center gap-2 mt-1.5">
-                          <span className="text-[11px]" style={{ color: '#8E8EA0' }}>
+                          <span className="text-[11px]" style={{ color: '#B8E4A0' }}>
                             Saved {savedTime}
                           </span>
                         </div>
@@ -303,10 +303,10 @@ export function SavedItemsPanel({ open, onClose }: SavedItemsPanelProps) {
                           e.stopPropagation()
                           handleRemove(item)
                         }}
-                        className="h-7 w-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#EDE5FF]"
+                        className="h-7 w-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#FF6B6B20]"
                         title="Remove from saved"
                       >
-                        <Trash2 className="h-3.5 w-3.5" style={{ color: '#E55B5B' }} />
+                        <Trash2 className="h-3.5 w-3.5" style={{ color: '#FF6B6B' }} />
                       </button>
                     </div>
                   </div>
