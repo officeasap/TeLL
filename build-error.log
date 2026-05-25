@@ -1,0 +1,24 @@
+
+> tell@0.1.0 build
+> next build
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env.local
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 4.9s
+  Running TypeScript ...
+Failed to compile.
+
+./src/components/ui/emoji-picker.tsx:5:24
+Type error: Cannot find module 'emoji-mart' or its corresponding type declarations.
+
+[0m [90m 3 |[39m [36mimport[39m { useState[33m,[39m useRef[33m,[39m useEffect } [36mfrom[39m [32m'react'[39m
+ [90m 4 |[39m [36mimport[39m { [33mSmile[39m } [36mfrom[39m [32m'lucide-react'[39m
+[31m[1m>[22m[39m[90m 5 |[39m [36mimport[39m { [33mPicker[39m } [36mfrom[39m [32m'emoji-mart'[39m
+ [90m   |[39m                        [31m[1m^[22m[39m
+ [90m 6 |[39m [36mimport[39m [32m'emoji-mart/css/emoji-mart.css'[39m
+ [90m 7 |[39m
+ [90m 8 |[39m [36minterface[39m [33mEmojiPickerProps[39m {[0m
+Next.js build worker exited with code: 1 and signal: null
