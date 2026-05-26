@@ -19,13 +19,27 @@ import {
   Search,
   X,
   Camera,
-  Trash2
+  Upload,
+  Trash2,
+  Eye,
+  EyeOff,
+  Music,
+  Info
 } from 'lucide-react'
+
+// Ringtone options
+const RINGTONES = [
+  { name: 'Classic Bell', file: '/tell-ringtons/ringtone1.mp3' },
+  { name: 'Soft Chime', file: '/tell-ringtons/ringtone2.mp3' },
+  { name: 'Digital Pulse', file: '/tell-ringtons/ringtone3.mp3' },
+  { name: 'Warm Melody', file: '/tell-ringtons/ringtone4.mp3' },
+  { name: 'Crystal Clear', file: '/tell-ringtons/ringtone5.mp3' },
+]
 
 export default function Dashboard() {
   const router = useRouter()
   const { user, setUser } = useAppStore()
-  const { startCall, activeCall, leaveCall } = useCallStore()
+  const { startCall, activeCall } = useCallStore()
   const [targetTell, setTargetTell] = useState('')
   const [connections, setConnections] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -37,9 +51,21 @@ export default function Dashboard() {
   const [copied, setCopied] = useState(false)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [showClearModal, setShowClearModal] = useState(false)
+  const [showContacts, setShowContacts] = useState(true)
+  const [selectedRingtone, setSelectedRingtone] = useState(RINGTONES[0].file)
+  const [showRingtonePicker, setShowRingtonePicker] = useState(false)
+  const [showAboutModal, setShowAboutModal] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const chatContainerRef = useRef<HTMLDivElement>(null)
 
-  // Avatar upload - Click on image triggers upload
+  // Scroll to bottom of chat when messages change
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [messages, selectedConnection])
+
   const handleAvatarClick = () => {
     fileInputRef.current?.click()
   }
@@ -105,49 +131,6 @@ export default function Dashboard() {
     }
   }
 
-  async function clearSingleChat() {
-    if (!selectedConnection) return
-    
-    const client = getSupabaseClient()
-    if (!client) return
-    
-    const { error } = await client
-      .from('tell_messages')
-      .delete()
-      .eq('connection_id', selectedConnection)
-    
-    if (error) {
-      console.error('Clear chat error:', error)
-      alert('Failed to clear chat')
-    } else {
-      setMessages(prev => ({ ...prev, [selectedConnection]: [] }))
-      alert('Chat cleared successfully')
-    }
-    setShowClearModal(false)
-  }
-
-  async function clearAllChats() {
-    const client = getSupabaseClient()
-    if (!client) return
-    
-    const connectionIds = connections.map(c => c.id)
-    if (connectionIds.length === 0) return
-    
-    const { error } = await client
-      .from('tell_messages')
-      .delete()
-      .in('connection_id', connectionIds)
-    
-    if (error) {
-      console.error('Clear all chats error:', error)
-      alert('Failed to clear all chats')
-    } else {
-      setMessages({})
-      alert('All chats cleared successfully')
-    }
-    setShowClearModal(false)
-  }
-
   async function inviteUser() {
     const email = prompt('Enter email address to invite:')
     if (!email) return
@@ -179,12 +162,15 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadUserAndConnections()
-  }, [])
+    // Test ringtone on selection
+    const audio = new Audio(selectedRingtone)
+    audio.play().catch(() => {})
+  }, [selectedRingtone])
 
   async function loadUserAndConnections() {
     const client = getSupabaseClient()
     if (!client) {
-      router.push('/setup')
+      router.push('/auth')
       return
     }
 
@@ -407,6 +393,43 @@ export default function Dashboard() {
     }
   }
 
+  async function clearSingleChat() {
+    if (!selectedConnection) return
+    const client = getSupabaseClient()
+    if (!client) return
+    const { error } = await client
+      .from('tell_messages')
+      .delete()
+      .eq('connection_id', selectedConnection)
+    if (error) {
+      console.error('Clear chat error:', error)
+      alert('Failed to clear chat')
+    } else {
+      setMessages(prev => ({ ...prev, [selectedConnection]: [] }))
+      alert('Chat cleared successfully')
+    }
+    setShowClearModal(false)
+  }
+
+  async function clearAllChats() {
+    const client = getSupabaseClient()
+    if (!client) return
+    const connectionIds = connections.map(c => c.id)
+    if (connectionIds.length === 0) return
+    const { error } = await client
+      .from('tell_messages')
+      .delete()
+      .in('connection_id', connectionIds)
+    if (error) {
+      console.error('Clear all chats error:', error)
+      alert('Failed to clear all chats')
+    } else {
+      setMessages({})
+      alert('All chats cleared successfully')
+    }
+    setShowClearModal(false)
+  }
+
   async function handleSignOut() {
     const client = getSupabaseClient()
     await client?.auth.signOut()
@@ -416,88 +439,133 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-gradient-to-br from-[#0a0a0a] to-[#121212]">
-        <Loader2 className="h-8 w-8 animate-spin text-[#1E2A78]" />
+        <Loader2 className="h-8 w-8 animate-spin text-[#13a1ff]" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] to-[#121212] py-12 px-8">
+    <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] to-[#121212] py-8 px-6">
       <CallListener />
       <IncomingCallBanner />
 
-      {/* Clear Chat Modal */}
-      <ClearChatModal
-        isOpen={showClearModal}
-        onClose={() => setShowClearModal(false)}
-        onClearSingle={clearSingleChat}
-        onClearAll={clearAllChats}
-        connectionName={selectedUser?.display_name}
-      />
+      {/* About Tell Modal */}
+      {showAboutModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-6 overflow-y-auto">
+          <div className="neumorph-panel max-w-2xl w-full p-8 max-h-[85vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-3xl font-bold font-['Oswald'] text-white">About Tell</h2>
+              <button onClick={() => setShowAboutModal(false)} className="neumorph-icon p-2">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-6 text-[#F5F5F5]/90 leading-relaxed">
+              <p className="text-lg font-semibold text-[#13a1ff]">You are being watched. Every single day.</p>
+              <p>Every message you type. Every call you make. Every person you talk to. Someone, somewhere, is recording it, analyzing it, and building a profile of who you are.</p>
+              <p>They know your politics. They know your struggles. They know your fears. They know who you love and who you hate. And they use that knowledge – not to help you – but to control you.</p>
+              <p className="text-lg font-semibold text-[#cd5126]">This is the silent prison of the digital age.</p>
+              <p>For decades, we have been told that surveillance keeps us safe. That our data is in good hands. That we have nothing to fear if we have nothing to hide.</p>
+              <p className="font-bold text-white">That is a lie.</p>
+              <p>Surveillance is not about safety. It is about power. The power to silence dissent. The power to manipulate opinions. The power to turn every citizen into a suspect.</p>
+              <p>Every time you use WhatsApp, Signal, Telegram, or any "free" service, you are feeding the machine. Your conversations are not private. Your metadata is sold. Your trust is betrayed.</p>
+              <p className="text-xl font-bold text-[#13a1ff] text-center my-6">TELL IS THE BREAK.</p>
+              <p>Tell has no servers that listen to your calls. No databases that store your messages forever. No corporate masters that sell your data to the highest bidder.</p>
+              <p>When you talk on Tell, you talk directly to the person on the other end. Peer to peer. No middlemen. No eavesdroppers. No surveillance.</p>
+              <p>Your Tell-number is your sovereign identity. No phone number. No email required. Just a unique code that only you control.</p>
+              <p className="font-bold text-white">This is not just an app. This is a declaration of independence.</p>
+              <p>We believe that the right to private communication is a God‑given right. Not a privilege granted by corporations. Not a temporary license from governments.</p>
+              <p className="text-center text-xl font-bold text-white my-4">"The fear of the Lord is the beginning of knowledge, but fools despise wisdom and instruction." — Proverbs 1:7</p>
+              <p>Wake up. Take back your voice. Take back your freedom.</p>
+              <p className="text-[#13a1ff] font-bold text-center text-2xl mt-4">TELL – Speak freely. Fear nothing.</p>
+            </div>
+          </div>
+        </div>
+      )}
 
-      {/* Main Container with 5cm margins equivalent (py-12 = 3rem, px-8 = 2rem) */}
-      <div className="max-w-2xl mx-auto">
+      {/* Main Container - Spacious with 16px border radius */}
+      <div className="max-w-5xl mx-auto">
         
-        {/* Header Section */}
-        <div className="neumorph-panel p-5 mb-5">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-4">
-              <img src="/tell-icons/tell-logo.png" alt="Tell" className="h-10 w-auto" />
-              <div className="h-8 w-px bg-[#F5F5F5]/20"></div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-[#F5F5F5]/60">Your Tell‑number:</span>
-                <code className="text-base font-mono font-bold text-[#2ECC71]">{user?.tell_number}</code>
-                <button onClick={copyTellNumber} className="neumorph-icon p-1.5">
-                  {copied ? <Check className="h-3.5 w-3.5 text-[#2ECC71]" /> : <Copy className="h-3.5 w-3.5 text-[#F5F5F5]/60" />}
-                </button>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button onClick={inviteUser} className="neumorph-btn-gray text-sm py-2 px-4 flex items-center gap-2">
-                <Users className="h-4 w-4" /> Invite
-              </button>
-              <button onClick={handleSignOut} className="neumorph-btn-gray text-sm py-2 px-4 flex items-center gap-2">
-                <LogOut className="h-4 w-4" /> Sign Out
+        {/* Header Section - Tell logo with top spacing */}
+        <div className="neumorph-panel p-8 mb-8" style={{ borderRadius: '16px' }}>
+          <div className="flex flex-col items-center text-center mb-8">
+            <img src="/tell-icons/tell-logo.png" alt="Tell" className="h-16 w-auto mb-4" />
+            <div className="flex items-center justify-center gap-3 mt-2">
+              <span className="text-base text-[#F5F5F5]/70">Your Tell‑number:</span>
+              <code className="text-2xl font-mono font-bold text-[#13a1ff]">{user?.tell_number}</code>
+              <button onClick={copyTellNumber} className="neumorph-icon p-2">
+                {copied ? <Check className="h-5 w-5 text-green-500" /> : <Copy className="h-5 w-5 text-[#F5F5F5]/70" />}
               </button>
             </div>
           </div>
+          <div className="flex justify-between items-center gap-4">
+            <button onClick={inviteUser} className="neumorph-btn-primary flex-1 flex items-center justify-center gap-2 py-3 text-base" style={{ background: '#13a1ff' }}>
+              <Users className="h-5 w-5" /> Invite
+            </button>
+            <button onClick={handleSignOut} className="neumorph-btn-primary flex-1 flex items-center justify-center gap-2 py-3 text-base" style={{ background: '#cd5126' }}>
+              <LogOut className="h-5 w-5" /> Sign Out
+            </button>
+          </div>
         </div>
 
-        {/* Avatar Section - Click to Upload (No separate button) */}
-        <div className="neumorph-panel p-5 mb-5">
-          <div className="flex items-center gap-5">
-            <div 
-              className="relative cursor-pointer group"
-              onClick={handleAvatarClick}
-            >
-              {user?.avatar_url ? (
-                <img 
-                  src={user.avatar_url} 
-                  alt="Avatar" 
-                  className="w-16 h-16 rounded-full object-cover border-2 border-[#2ECC71] group-hover:opacity-80 transition-opacity"
-                />
-              ) : (
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#1E2A78] to-[#2ECC71] flex items-center justify-center border-2 border-[#2ECC71] group-hover:opacity-80 transition-opacity">
-                  <Camera className="h-7 w-7 text-white" />
-                </div>
-              )}
-              <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                <Camera className="h-6 w-6 text-white" />
+        {/* Profile Picture Section - Spaced properly */}
+        <div className="neumorph-panel p-6 mb-8 flex items-center gap-6" style={{ borderRadius: '16px' }}>
+          <div 
+            className="relative cursor-pointer group"
+            onClick={handleAvatarClick}
+          >
+            {user?.avatar_url ? (
+              <img 
+                src={user.avatar_url} 
+                alt="Avatar" 
+                className="w-20 h-20 rounded-full object-cover border-2 border-[#13a1ff] group-hover:opacity-80 transition-opacity"
+              />
+            ) : (
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#1E2A78] to-[#13a1ff] flex items-center justify-center border-2 border-[#13a1ff] group-hover:opacity-80 transition-opacity">
+                <Camera className="h-8 w-8 text-white" />
               </div>
-            </div>
-            <div>
-              <p className="text-base font-medium text-white">Profile Picture</p>
-              <p className="text-sm text-[#F5F5F5]/50 mt-0.5">Click on the image to upload or change</p>
+            )}
+            <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+              <Upload className="h-5 w-5 text-white" />
             </div>
           </div>
-          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => {
-            if (e.target.files?.[0]) uploadAvatar(e.target.files[0])
-          }} />
+          <div className="flex-1">
+            <p className="text-lg font-medium text-white">Profile Picture</p>
+            <p className="text-sm text-[#F5F5F5]/50 mt-1">Click on the image to upload or change your avatar</p>
+          </div>
+          {/* About Tell Button */}
+          <button onClick={() => setShowAboutModal(true)} className="neumorph-icon p-3 flex items-center gap-2">
+            <Info className="h-5 w-5 text-[#13a1ff]" />
+            <span className="text-sm font-medium text-white hidden sm:inline">About Tell</span>
+          </button>
+          {/* Ringtone Picker */}
+          <div className="relative">
+            <button onClick={() => setShowRingtonePicker(!showRingtonePicker)} className="neumorph-icon p-3 flex items-center gap-2">
+              <Music className="h-5 w-5 text-[#13a1ff]" />
+              <span className="text-sm font-medium text-white hidden sm:inline">Ringtone</span>
+            </button>
+            {showRingtonePicker && (
+              <div className="absolute right-0 top-full mt-2 neumorph-panel p-2 z-20 min-w-[180px]">
+                {RINGTONES.map((ringtone) => (
+                  <button
+                    key={ringtone.name}
+                    onClick={() => {
+                      setSelectedRingtone(ringtone.file)
+                      setShowRingtonePicker(false)
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${selectedRingtone === ringtone.file ? 'bg-[#13a1ff]/20 text-[#13a1ff]' : 'hover:bg-[#13a1ff]/10 text-white'}`}
+                  >
+                    {ringtone.name}
+                    {selectedRingtone === ringtone.file && <span className="float-right">✓</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Search Section */}
-        <div className="neumorph-panel p-5 mb-5">
-          <h2 className="text-base font-semibold mb-4 text-white">Start communicating</h2>
+        {/* Search Section - Find button positioned correctly */}
+        <div className="neumorph-panel p-6 mb-8" style={{ borderRadius: '16px' }}>
+          <h2 className="text-xl font-semibold mb-5 text-white font-['Oswald']">Start communicating</h2>
           <div className="flex gap-3">
             <input
               type="text"
@@ -508,33 +576,46 @@ export default function Dashboard() {
               maxLength={8}
               onKeyDown={(e) => e.key === 'Enter' && handleSearchUser()}
             />
-            <button onClick={handleSearchUser} className="neumorph-btn-gray flex items-center gap-2 px-6 py-3 text-base">
+            <button onClick={handleSearchUser} className="neumorph-btn-primary flex items-center gap-2 px-8 py-3 text-base" style={{ background: '#13a1ff' }}>
               <Search className="h-5 w-5" /> Find
             </button>
           </div>
         </div>
+
+        {/* Contact Toggle Button */}
+        {connections.length > 0 && (
+          <div className="mb-4 flex justify-end">
+            <button
+              onClick={() => setShowContacts(!showContacts)}
+              className="neumorph-icon flex items-center gap-2 px-4 py-2 text-sm"
+            >
+              {showContacts ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              {showContacts ? 'Hide Contacts' : 'Show Contacts'}
+            </button>
+          </div>
+        )}
 
         {/* Call Options Modal */}
         {showCallOptions && selectedUser && (
           <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
             <div className="neumorph-panel p-6 max-w-md w-full">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold text-white">Connect with {selectedUser.display_name}</h3>
+                <h3 className="text-xl font-bold text-white font-['Oswald']">Connect with {selectedUser.display_name}</h3>
                 <button onClick={() => setShowCallOptions(false)} className="neumorph-icon p-2">
                   <X className="h-5 w-5" />
                 </button>
               </div>
-              <p className="text-base text-[#F5F5F5]/70 mb-6">Tell‑number: <code className="text-[#2ECC71] text-lg">{selectedUser.tell_number}</code></p>
+              <p className="text-base text-[#F5F5F5]/70 mb-6">Tell‑number: <code className="text-[#13a1ff] text-lg">{selectedUser.tell_number}</code></p>
               <div className="grid grid-cols-3 gap-4">
-                <button onClick={startTextChat} className="neumorph-btn-gray flex flex-col items-center gap-2 py-4 text-sm">
+                <button onClick={startTextChat} className="neumorph-btn-primary flex flex-col items-center gap-2 py-4 text-sm" style={{ background: '#13a1ff' }}>
                   <MessageSquare className="h-7 w-7" />
                   <span>Text</span>
                 </button>
-                <button onClick={startVoiceCall} className="neumorph-btn-gray flex flex-col items-center gap-2 py-4 text-sm">
+                <button onClick={startVoiceCall} className="neumorph-btn-primary flex flex-col items-center gap-2 py-4 text-sm" style={{ background: '#13a1ff' }}>
                   <img src="/tell-icons/voice.png" alt="Voice" className="h-7 w-7" />
                   <span>Voice</span>
                 </button>
-                <button onClick={startVideoCall} className="neumorph-btn-success flex flex-col items-center gap-2 py-4 text-sm">
+                <button onClick={startVideoCall} className="neumorph-btn-primary flex flex-col items-center gap-2 py-4 text-sm" style={{ background: '#13a1ff' }}>
                   <img src="/tell-icons/video.png" alt="Video" className="h-7 w-7" />
                   <span>Video</span>
                 </button>
@@ -545,20 +626,21 @@ export default function Dashboard() {
 
         {/* Active Chat View */}
         {selectedConnection && selectedUser && (
-          <div className="neumorph-panel flex flex-col h-[500px] overflow-hidden mb-5">
-            <div className="p-4 border-b border-[#1E2A78]/20">
+          <div className="neumorph-panel flex flex-col h-[550px] overflow-hidden mb-8" style={{ borderRadius: '16px' }}>
+            {/* Chat Header */}
+            <div className="p-4 border-b border-[#13a1ff]/20 bg-[#121212]">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-bold text-white">{selectedUser.display_name}</h2>
-                  <p className="text-sm text-[#F5F5F5]/60">{selectedUser.tell_number}</p>
+                  <h2 className="text-xl font-bold text-white font-['Oswald']">{selectedUser.display_name}</h2>
+                  <p className="text-sm text-[#F5F5F5]/60 mt-1">{selectedUser.tell_number}</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                   <button 
                     onClick={() => setShowClearModal(true)} 
                     className="neumorph-icon p-2.5" 
                     title="Clear chat history"
                   >
-                    <Trash2 className="h-5 w-5 text-[#E74C3C]" />
+                    <Trash2 className="h-5 w-5 text-[#cd5126]" />
                   </button>
                   <button onClick={startVoiceCall} className="neumorph-icon p-2.5" title="Voice call">
                     <img src="/tell-icons/voice.png" alt="Voice" className="h-5 w-5" />
@@ -570,20 +652,21 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="flex-1 overflow-auto p-4 space-y-3">
+            {/* Messages Container - Independent scrollbar, Tell logo always visible */}
+            <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-6 space-y-3">
               {(messages[selectedConnection] || []).length === 0 ? (
                 <div className="text-center py-12">
-                  <MessageSquare className="h-12 w-12 text-[#1E2A78]/40 mx-auto mb-3" />
-                  <p className="text-sm text-[#F5F5F5]/60">No messages yet. Start the conversation!</p>
+                  <MessageSquare className="h-12 w-12 text-[#13a1ff]/40 mx-auto mb-3" />
+                  <p className="text-base text-[#F5F5F5]/60">No messages yet. Start the conversation!</p>
                 </div>
               ) : (
                 (messages[selectedConnection] || []).map((msg, idx) => {
                   const isOwn = msg.sender_tell === user?.tell_number
                   return (
                     <div key={idx} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-base ${isOwn ? 'bg-[#1E2A78] text-white' : 'bg-[#2C2C2C] text-white'}`}>
+                      <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-base ${isOwn ? 'bg-[#13a1ff] text-white' : 'bg-[#2C2C2C] text-white'}`}>
                         <p className="break-words">{msg.message}</p>
-                        <p className="text-[10px] opacity-60 mt-1">
+                        <p className="text-[10px] opacity-70 mt-1 text-right">
                           {new Date(msg.sent_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
@@ -591,10 +674,11 @@ export default function Dashboard() {
                   )
                 })
               )}
-              <div ref={(el) => el?.scrollIntoView({ behavior: 'smooth' })} />
+              <div ref={messagesEndRef} />
             </div>
 
-            <div className="p-4 border-t border-[#1E2A78]/20">
+            {/* Message Input */}
+            <div className="p-4 border-t border-[#13a1ff]/20 bg-[#121212]">
               <div className="flex gap-3">
                 <input
                   type="text"
@@ -604,7 +688,7 @@ export default function Dashboard() {
                   placeholder="Type a message..."
                   className="flex-1 rounded-xl text-base px-5 py-3"
                 />
-                <button onClick={() => sendMessage(selectedConnection)} className="neumorph-btn-success px-5 py-3">
+                <button onClick={() => sendMessage(selectedConnection)} className="neumorph-btn-primary px-5 py-3" style={{ background: '#13a1ff' }}>
                   <MessageSquare className="h-5 w-5" />
                 </button>
               </div>
@@ -614,32 +698,32 @@ export default function Dashboard() {
 
         {/* Welcome State */}
         {!selectedConnection && (
-          <div className="neumorph-panel p-8 text-center">
-            <img src="/tell-icons/tell-logo.png" alt="Tell" className="h-20 w-auto mx-auto mb-5 opacity-70" />
-            <h3 className="text-2xl font-bold mb-3 font-['Oswald'] text-white">Welcome to Tell</h3>
-            <p className="text-base text-[#F5F5F5]/60 mb-6">Enter a Tell‑number to start communicating securely</p>
-            <div className="neumorph-panel p-4 inline-block mx-auto">
-              <p className="text-sm text-[#F5F5F5]/60 mb-1">Your sovereign identifier</p>
-              <code className="text-2xl font-mono font-bold text-[#2ECC71]">{user?.tell_number}</code>
+          <div className="neumorph-panel p-10 text-center" style={{ borderRadius: '16px' }}>
+            <img src="/tell-icons/tell-logo.png" alt="Tell" className="h-24 w-auto mx-auto mb-6 opacity-80" />
+            <h3 className="text-3xl font-bold mb-4 font-['Oswald'] text-white">Welcome to Tell</h3>
+            <p className="text-lg text-[#F5F5F5]/60 mb-8">Enter a Tell‑number to start communicating securely</p>
+            <div className="neumorph-panel p-5 inline-block mx-auto">
+              <p className="text-base text-[#F5F5F5]/60 mb-2">Your sovereign identifier</p>
+              <code className="text-3xl font-mono font-bold text-[#13a1ff]">{user?.tell_number}</code>
             </div>
           </div>
         )}
 
-        {/* YOUR CONTACTS - Inside main frame */}
-        {connections.length > 0 && !selectedConnection && (
-          <div className="neumorph-panel mt-5 p-5">
-            <h3 className="text-sm font-semibold text-[#F5F5F5]/60 mb-3 uppercase tracking-wider">Your contacts</h3>
-            <div className="space-y-2">
+        {/* Contact List - Toggleable */}
+        {connections.length > 0 && showContacts && !selectedConnection && (
+          <div className="neumorph-panel mt-6 p-5" style={{ borderRadius: '16px' }}>
+            <h3 className="text-base font-semibold text-[#F5F5F5]/60 mb-4 uppercase tracking-wider">Your contacts</h3>
+            <div className="space-y-2 max-h-64 overflow-y-auto">
               {connections.map((conn) => (
                 <button
                   key={conn.id}
                   onClick={() => selectConnection(conn)}
-                  className="w-full text-left p-3 rounded-xl hover:bg-[#1E2A78]/10 transition-all flex items-center gap-3"
+                  className="w-full text-left p-3 rounded-xl hover:bg-[#13a1ff]/10 transition-all flex items-center gap-3"
                 >
                   {conn.otherAvatar ? (
                     <img src={conn.otherAvatar} alt="" className="w-10 h-10 rounded-full object-cover" />
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1E2A78] to-[#2ECC71] flex items-center justify-center text-base font-bold text-white">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1E2A78] to-[#13a1ff] flex items-center justify-center text-base font-bold text-white">
                       {conn.otherName.charAt(0).toUpperCase()}
                     </div>
                   )}
@@ -648,8 +732,8 @@ export default function Dashboard() {
                     <div className="text-xs text-[#F5F5F5]/50 mt-0.5">{conn.otherTell}</div>
                   </div>
                   {activeCall?.id === conn.id && (
-                    <div className="text-xs text-[#2ECC71] flex items-center gap-1.5">
-                      <span className="h-2 w-2 rounded-full bg-[#2ECC71] animate-pulse"></span> Live
+                    <div className="text-xs text-[#13a1ff] flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-[#13a1ff] animate-pulse"></span> Live
                     </div>
                   )}
                 </button>
@@ -659,7 +743,18 @@ export default function Dashboard() {
         )}
       </div>
 
+      <ClearChatModal
+        isOpen={showClearModal}
+        onClose={() => setShowClearModal(false)}
+        onClearSingle={clearSingleChat}
+        onClearAll={clearAllChats}
+        connectionName={selectedUser?.display_name}
+      />
+
       <CallPanel />
+      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => {
+        if (e.target.files?.[0]) uploadAvatar(e.target.files[0])
+      }} />
     </div>
   )
 }
