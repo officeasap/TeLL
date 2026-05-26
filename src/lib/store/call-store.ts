@@ -1,4 +1,3 @@
-// src/lib/store/call-store.ts – FULLY WORKING NUCLEAR VERSION
 import { create } from 'zustand'
 import { getSupabaseClient } from '@/lib/supabase/client'
 import { useAppStore } from '@/lib/store/app-store'
@@ -91,7 +90,8 @@ export const useCallStore = create<CallStore>((set, get) => ({
         })
       })
       
-      await channel.httpSend('broadcast', {
+      await channel.send({
+        type: 'broadcast',
         event: 'signal',
         payload: { signal, from: user.id, to: null, callId, isVideo }
       })
@@ -99,7 +99,6 @@ export const useCallStore = create<CallStore>((set, get) => ({
 
     peer.on('stream', (remoteStream) => {
       set({ remoteStream })
-      // Stop outgoing ringtone on connect
       if (outgoingRingtone) {
         outgoingRingtone.pause()
         outgoingRingtone = null
@@ -123,7 +122,8 @@ export const useCallStore = create<CallStore>((set, get) => ({
           resolve()
         })
       })
-      await broadcastChannel.httpSend('broadcast', {
+      await broadcastChannel.send({
+        type: 'broadcast',
         event: 'call_started',
         payload: {
           callId,
@@ -143,7 +143,6 @@ export const useCallStore = create<CallStore>((set, get) => ({
     const { user } = useAppStore.getState()
     if (!user) return
 
-    // Stop incoming ringtone
     if (incomingRingtone) {
       incomingRingtone.pause()
       incomingRingtone = null
@@ -176,7 +175,8 @@ export const useCallStore = create<CallStore>((set, get) => ({
         })
       })
       
-      await channel.httpSend('broadcast', {
+      await channel.send({
+        type: 'broadcast',
         event: 'signal',
         payload: { signal, from: user.id, to: incomingCall.callerId }
       })

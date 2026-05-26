@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getSupabaseClient } from '@/lib/supabase/client'
-import { Loader2, Mail, KeyRound } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 
 type Mode = 'signin' | 'signup'
 type View = 'loading' | 'form' | 'forgot-password' | 'reset-password' | 'reset-email-sent'
@@ -148,41 +148,41 @@ function AuthForm() {
   }
 
   const errorBanner = error && (
-    <div className="p-3 bg-[#E74C3C]/10 border border-[#E74C3C]/30 rounded-xl">
+    <div className="p-3 bg-[#E74C3C]/10 border border-[#E74C3C]/30 rounded-xl mb-4">
       <p className="text-sm text-[#E74C3C]">{error}</p>
     </div>
   )
 
   if (view === 'loading') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] to-[#121212] flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#13a1ff]" />
+      <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-[#812505]" />
       </div>
     )
   }
 
   if (view === 'forgot-password') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] to-[#121212] flex items-center justify-center p-6">
-        <div className="max-w-md w-full neumorph-panel p-8 text-center">
+      <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center p-6">
+        <div className="w-full max-w-md bg-[#2b2b2b] rounded-2xl shadow-2xl p-10 text-center">
           <img src="/tell-icons/tell-logo.png" alt="Tell" className="h-12 w-auto mx-auto mb-6" />
           <h2 className="text-2xl font-bold text-white mb-2">Forgot password?</h2>
-          <p className="text-sm text-[#F5F5F5]/60 mb-6">Enter your email and we'll send you a reset link.</p>
+          <p className="text-sm text-white/60 mb-6">Enter your email and we'll send you a reset link.</p>
           <form onSubmit={handleForgotPassword} className="space-y-5">
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email address"
-              className="w-full rounded-xl text-base px-5 py-3"
+              className="w-full rounded-xl text-base px-5 py-3 bg-[#1f1f1f] text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#812505]"
               required
               autoFocus
             />
             {errorBanner}
-            <button type="submit" disabled={loading} className="w-full neumorph-btn-primary py-3 text-base" style={{ background: '#13a1ff' }}>
+            <button type="submit" disabled={loading} className="w-full rounded-xl py-3 text-base font-medium bg-[#812505] text-white hover:bg-[#535150] transition">
               {loading ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : 'Send Reset Link'}
             </button>
-            <button type="button" onClick={() => setView('form')} className="w-full neumorph-btn-primary py-3 text-base" style={{ background: '#cd5126' }}>
+            <button type="button" onClick={() => setView('form')} className="w-full rounded-xl py-3 text-base font-medium bg-[#812505] text-white hover:bg-[#535150] transition">
               Back to Sign In
             </button>
           </form>
@@ -193,14 +193,14 @@ function AuthForm() {
 
   if (view === 'reset-email-sent') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] to-[#121212] flex items-center justify-center p-6">
-        <div className="max-w-md w-full neumorph-panel p-8 text-center">
-          <Mail className="h-12 w-12 text-[#13a1ff] mx-auto mb-4" />
+      <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center p-6">
+        <div className="w-full max-w-md bg-[#2b2b2b] rounded-2xl shadow-2xl p-10 text-center">
+          <div className="text-[#13a1ff] text-5xl mb-4">📧</div>
           <h2 className="text-2xl font-bold text-white mb-2">Check your email</h2>
-          <p className="text-sm text-[#F5F5F5]/60 mb-6">
+          <p className="text-sm text-white/60 mb-6">
             We sent a password reset link to <strong>{email}</strong>
           </p>
-          <button onClick={() => setView('form')} className="w-full neumorph-btn-primary py-3" style={{ background: '#13a1ff' }}>
+          <button onClick={() => setView('form')} className="w-full rounded-xl py-3 text-base font-medium bg-[#812505] text-white hover:bg-[#535150] transition">
             Back to Sign In
           </button>
         </div>
@@ -210,18 +210,18 @@ function AuthForm() {
 
   if (view === 'reset-password') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] to-[#121212] flex items-center justify-center p-6">
-        <div className="max-w-md w-full neumorph-panel p-8 text-center">
-          <KeyRound className="h-12 w-12 text-[#13a1ff] mx-auto mb-4" />
+      <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center p-6">
+        <div className="w-full max-w-md bg-[#2b2b2b] rounded-2xl shadow-2xl p-10 text-center">
+          <img src="/tell-icons/tell-logo.png" alt="Tell" className="h-12 w-auto mx-auto mb-6" />
           <h2 className="text-2xl font-bold text-white mb-2">Reset your password</h2>
-          <p className="text-sm text-[#F5F5F5]/60 mb-6">Enter your new password below.</p>
+          <p className="text-sm text-white/60 mb-6">Enter your new password below.</p>
           <form onSubmit={handleResetPassword} className="space-y-4">
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="New password"
-              className="w-full rounded-xl text-base px-5 py-3"
+              className="w-full rounded-xl text-base px-5 py-3 bg-[#1f1f1f] text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#812505]"
               required
               minLength={6}
               autoFocus
@@ -231,12 +231,12 @@ function AuthForm() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Confirm new password"
-              className="w-full rounded-xl text-base px-5 py-3"
+              className="w-full rounded-xl text-base px-5 py-3 bg-[#1f1f1f] text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#812505]"
               required
               minLength={6}
             />
             {errorBanner}
-            <button type="submit" disabled={loading} className="w-full neumorph-btn-primary py-3 text-base" style={{ background: '#13a1ff' }}>
+            <button type="submit" disabled={loading} className="w-full rounded-xl py-3 text-base font-medium bg-[#812505] text-white hover:bg-[#535150] transition">
               {loading ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : 'Set New Password'}
             </button>
           </form>
@@ -246,26 +246,26 @@ function AuthForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] to-[#121212] flex items-center justify-center p-6">
-      <div className="max-w-md w-full neumorph-panel p-8">
+    <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center p-6">
+      <div className="w-full max-w-md bg-[#2b2b2b] rounded-2xl shadow-2xl p-10">
         <div className="text-center mb-8">
           <img src="/tell-icons/tell-logo.png" alt="Tell" className="h-14 w-auto mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-white">
             {mode === 'signin' ? 'Welcome Back' : 'Create Account'}
           </h2>
-          <p className="text-sm text-[#F5F5F5]/60 mt-1">
+          <p className="text-sm text-white/60 mt-1">
             {mode === 'signin' ? 'Sign in to continue' : 'Join the sovereign network'}
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-6">
           {mode === 'signup' && (
             <input
               type="text"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="Display name"
-              className="w-full rounded-xl text-base px-5 py-3"
+              className="w-full rounded-xl text-base px-5 py-3 bg-[#1f1f1f] text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#812505]"
             />
           )}
           <input
@@ -273,7 +273,7 @@ function AuthForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email address"
-            className="w-full rounded-xl text-base px-5 py-3"
+            className="w-full rounded-xl text-base px-5 py-3 bg-[#1f1f1f] text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#812505] mb-12"
             required
           />
           <input
@@ -281,14 +281,17 @@ function AuthForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
-            className="w-full rounded-xl text-base px-5 py-3"
+            className="w-full rounded-xl text-base px-5 py-3 bg-[#1f1f1f] text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#812505]"
             required
             minLength={6}
           />
+
           {errorBanner}
-          <button type="submit" disabled={loading} className="w-full neumorph-btn-primary py-3 text-base" style={{ background: '#13a1ff' }}>
+
+          <button type="submit" disabled={loading} className="w-full rounded-xl py-3 text-base font-medium bg-[#812505] text-white hover:bg-[#535150] transition">
             {loading ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : (mode === 'signin' ? 'Sign In' : 'Create Account')}
           </button>
+
           <div className="text-center">
             <button
               type="button"
@@ -296,19 +299,20 @@ function AuthForm() {
                 setMode(mode === 'signin' ? 'signup' : 'signin')
                 setError(null)
               }}
-              className="text-sm text-[#F5F5F5]/60 hover:text-white transition-colors"
+              className="text-sm text-white/60 hover:text-white transition-colors"
             >
               {mode === 'signin'
                 ? "Don't have an account? Sign Up"
                 : 'Already have an account? Sign In'}
             </button>
           </div>
+
           {mode === 'signin' && (
             <div className="text-center">
               <button
                 type="button"
                 onClick={() => setView('forgot-password')}
-                className="text-sm text-[#13a1ff] hover:text-[#cd5126] transition-colors"
+                className="text-sm text-[#13a1ff] hover:text-white transition-colors"
               >
                 Forgot password?
               </button>
@@ -323,8 +327,8 @@ function AuthForm() {
 export default function AuthPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] to-[#121212] flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#13a1ff]" />
+      <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-[#812505]" />
       </div>
     }>
       <AuthForm />

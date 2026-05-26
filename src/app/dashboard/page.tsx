@@ -56,12 +56,36 @@ export default function Dashboard() {
   const [showAboutModal, setShowAboutModal] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const chatContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
     }
   }, [messages, selectedConnection])
+
+  // Real-time message subscription
+  useEffect(() => {
+    if (!user || !selectedConnection) return
+    const client = getSupabaseClient()
+    if (!client) return
+    const channel = client.channel(`messages:${selectedConnection}`)
+    channel
+      .on('postgres_changes', 
+        { event: 'INSERT', schema: 'public', table: 'tell_messages', filter: `connection_id=eq.${selectedConnection}` }, 
+        (payload) => {
+          const newMessage = payload.new as any
+          if (newMessage.sender_tell !== user.tell_number) {
+            setMessages(prev => ({
+              ...prev,
+              [selectedConnection]: [...(prev[selectedConnection] || []), newMessage]
+            }))
+          }
+        }
+      )
+      .subscribe()
+    return () => { channel.unsubscribe() }
+  }, [user, selectedConnection])
 
   const handleAvatarClick = () => {
     fileInputRef.current?.click()
@@ -432,136 +456,100 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] to-[#121212] flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#13a1ff]" />
+      <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-[#812505]" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] to-[#121212] py-8 px-4">
-      <CallListener />
-      <IncomingCallBanner />
+    <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center p-4 overflow-hidden">
+      <div className="w-full max-w-4xl bg-[#2b2b2b] rounded-3xl shadow-2xl p-12 pt-20 pb-8 flex flex-col items-center">
+        <CallListener />
+        <IncomingCallBanner />
 
-      {/* About Tell Modal */}
-      {showAboutModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="neumorph-panel max-w-lg w-full max-h-[80vh] overflow-y-auto p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold text-white">About Tell</h2>
-              <button onClick={() => setShowAboutModal(false)} className="neumorph-icon p-2">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="space-y-4 text-[#F5F5F5]/80 text-sm leading-relaxed">
-              <p className="text-base font-semibold text-[#13a1ff]">You are being watched.</p>
-              <p>Every message, every call, every person you talk to. Someone is recording it.</p>
-              <p>They know your politics. Your fears. Who you love. And they use it to control you.</p>
-              <p className="text-base font-semibold text-[#cd5126]">This is the silent prison.</p>
-              <p>Tell breaks the chains. No servers listen. No databases store. No middlemen.</p>
-              <p className="font-bold text-white">Your Tell-number. Your sovereignty.</p>
-              <p className="text-center text-base font-bold text-white my-3">"The truth shall set you free." — John 8:32</p>
-              <p className="text-[#13a1ff] font-bold text-center text-lg">TELL – Speak freely. Fear nothing.</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Main Container - Responsive, Centered, No Clipping */}
-      <div className="max-w-3xl mx-auto">
-        
-        {/* Header */}
-        <div className="neumorph-panel p-5 mb-5 text-center">
-          <img src="/tell-icons/tell-logo.png" alt="Tell" className="h-12 w-auto mx-auto mb-3" />
-          <div className="flex items-center justify-center gap-2 flex-wrap">
-            <span className="text-sm text-[#F5F5F5]/70">Your Tell‑number:</span>
-            <code className="text-lg font-mono font-bold text-[#13a1ff]">{user?.tell_number}</code>
-            <button onClick={copyTellNumber} className="neumorph-icon p-1.5">
-              {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4 text-[#F5F5F5]/70" />}
-            </button>
-          </div>
-          <div className="flex gap-3 mt-4">
-            <button onClick={inviteUser} className="flex-1 neumorph-btn-primary py-2.5 text-sm flex items-center justify-center gap-2" style={{ background: '#13a1ff' }}>
-              <Users className="h-4 w-4" /> Invite
-            </button>
-            <button onClick={handleSignOut} className="flex-1 neumorph-btn-primary py-2.5 text-sm flex items-center justify-center gap-2" style={{ background: '#cd5126' }}>
-              <LogOut className="h-4 w-4" /> Sign Out
-            </button>
-          </div>
-        </div>
-
-        {/* Profile & Settings Row */}
-        <div className="neumorph-panel p-4 mb-5 flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-3">
-            <div className="relative cursor-pointer group" onClick={handleAvatarClick}>
-              {user?.avatar_url ? (
-                <img src={user.avatar_url} alt="Avatar" className="w-12 h-12 rounded-full object-cover border-2 border-[#13a1ff]" />
-              ) : (
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#1E2A78] to-[#13a1ff] flex items-center justify-center">
-                  <Camera className="h-5 w-5 text-white" />
-                </div>
-              )}
-              <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-                <Upload className="h-3 w-3 text-white" />
+        {/* About Tell Modal */}
+        {showAboutModal && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+            <div className="bg-[#2b2b2b] rounded-2xl max-w-md w-full max-h-[80vh] overflow-y-auto p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold text-white">About Tell</h2>
+                <button onClick={() => setShowAboutModal(false)} className="text-white/70 hover:text-white p-1">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="space-y-4 text-[#F5F5F5]/80 text-sm leading-relaxed">
+                <p className="text-base font-semibold text-[#13a1ff]">You are being watched.</p>
+                <p>Every message, every call, every person you talk to. Someone is recording it.</p>
+                <p>They know your politics. Your fears. Who you love. And they use it to control you.</p>
+                <p className="text-base font-semibold text-[#cd5126]">This is the silent prison.</p>
+                <p>Tell breaks the chains. No servers listen. No databases store. No middlemen.</p>
+                <p className="font-bold text-white">Your Tell-number. Your sovereignty.</p>
+                <p className="text-center text-lg font-bold text-white my-3">"The truth shall set you free." — John 8:32</p>
+                <p className="text-[#13a1ff] font-bold text-center text-xl">TELL – Speak freely. Fear nothing.</p>
               </div>
             </div>
-            <div>
-              <p className="text-sm font-medium text-white">Profile</p>
-              <p className="text-xs text-[#F5F5F5]/50">Tap to change</p>
-            </div>
           </div>
-          <div className="flex gap-2">
-            <button onClick={() => setShowAboutModal(true)} className="neumorph-icon p-2">
-              <Info className="h-4 w-4 text-[#13a1ff]" />
-              <span className="sr-only sm:not-sr-only sm:ml-1 sm:text-xs">About</span>
+        )}
+
+        {/* Header */}
+        <div className="text-center mb-8 w-full">
+          <img src="/tell-icons/tell-logo.png" alt="Tell" className="h-12 w-auto mx-auto mb-4" />
+          <div className="flex items-center justify-center gap-3 flex-wrap">
+            <span className="text-sm text-[#F5F5F5]/70">Your Tell‑number:</span>
+            <code className="text-xl font-mono font-bold text-[#13a1ff]">{user?.tell_number}</code>
+            <button onClick={copyTellNumber} className="text-white/50 hover:text-white">
+              {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
             </button>
-            <div className="relative">
-              <button onClick={() => setShowRingtonePicker(!showRingtonePicker)} className="neumorph-icon p-2">
-                <Music className="h-4 w-4 text-[#13a1ff]" />
-                <span className="sr-only sm:not-sr-only sm:ml-1 sm:text-xs">Ringtone</span>
-              </button>
-              {showRingtonePicker && (
-                <div className="absolute right-0 top-full mt-2 neumorph-panel p-2 z-20 min-w-[140px]">
-                  {RINGTONES.map((ringtone) => (
-                    <button
-                      key={ringtone.name}
-                      onClick={() => { setSelectedRingtone(ringtone.file); setShowRingtonePicker(false) }}
-                      className={`w-full text-left px-3 py-1.5 rounded-lg text-xs transition-colors ${selectedRingtone === ringtone.file ? 'bg-[#13a1ff]/20 text-[#13a1ff]' : 'hover:bg-[#13a1ff]/10 text-white'}`}
-                    >
-                      {ringtone.name}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
         </div>
 
-        {/* Search */}
-        <div className="neumorph-panel p-5 mb-5">
-          <h2 className="text-base font-semibold mb-3 text-white">Find a contact</h2>
-          <div className="flex gap-2">
+        {/* Action Buttons Row */}
+        <div className="flex flex-wrap gap-3 justify-center mb-8 w-full">
+          <button onClick={inviteUser} className="px-6 py-2.5 rounded-xl bg-[#812505] text-white hover:bg-[#535150] transition text-sm font-medium">Invite</button>
+          <button onClick={handleAvatarClick} className="px-6 py-2.5 rounded-xl bg-[#812505] text-white hover:bg-[#535150] transition text-sm font-medium">Profile</button>
+          <button onClick={() => setShowAboutModal(true)} className="px-6 py-2.5 rounded-xl bg-[#812505] text-white hover:bg-[#535150] transition text-sm font-medium">About</button>
+          <div className="relative">
+            <button onClick={() => setShowRingtonePicker(!showRingtonePicker)} className="px-6 py-2.5 rounded-xl bg-[#812505] text-white hover:bg-[#535150] transition text-sm font-medium">Ringtone</button>
+            {showRingtonePicker && (
+              <div className="absolute top-full left-0 mt-2 bg-[#2b2b2b] rounded-xl p-2 z-20 min-w-[140px] shadow-lg">
+                {RINGTONES.map((ringtone) => (
+                  <button
+                    key={ringtone.name}
+                    onClick={() => { setSelectedRingtone(ringtone.file); setShowRingtonePicker(false) }}
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-xs transition-colors ${selectedRingtone === ringtone.file ? 'bg-[#13a1ff]/30 text-[#13a1ff]' : 'text-white hover:bg-white/10'}`}
+                  >
+                    {ringtone.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <button onClick={handleSignOut} className="px-6 py-2.5 rounded-xl bg-[#812505] text-white hover:bg-[#535150] transition text-sm font-medium">Sign Out</button>
+        </div>
+
+        {/* Search Section */}
+        <div className="w-full mb-8">
+          <div className="flex gap-3">
             <input
               type="text"
               value={targetTell}
               onChange={(e) => setTargetTell(e.target.value.toUpperCase())}
-              placeholder="Enter 8‑char Tell‑number"
-              className="flex-1 rounded-xl text-base px-4 py-2.5"
+              placeholder="Enter 8‑character Tell‑number"
+              className="flex-1 rounded-xl text-base px-5 py-3 bg-[#1f1f1f] text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#812505]"
               maxLength={8}
               onKeyDown={(e) => e.key === 'Enter' && handleSearchUser()}
             />
-            <button onClick={handleSearchUser} className="neumorph-btn-primary px-5 py-2.5 text-sm flex items-center gap-2" style={{ background: '#13a1ff' }}>
-              <Search className="h-4 w-4" /> Find
-            </button>
+            <button onClick={handleSearchUser} className="px-6 py-3 rounded-xl bg-[#812505] text-white hover:bg-[#535150] transition text-sm font-medium">Find</button>
           </div>
         </div>
 
-        {/* Toggle Contacts Button */}
+        {/* Toggle Contacts */}
         {connections.length > 0 && (
-          <div className="flex justify-end mb-3">
-            <button onClick={() => setShowContacts(!showContacts)} className="neumorph-icon px-3 py-1.5 text-xs flex items-center gap-1">
+          <div className="flex justify-end w-full mb-3">
+            <button onClick={() => setShowContacts(!showContacts)} className="text-white/50 hover:text-white text-xs flex items-center gap-1">
               {showContacts ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-              {showContacts ? 'Hide' : 'Show'} Contacts
+              {showContacts ? 'Hide Contacts' : 'Show Contacts'}
             </button>
           </div>
         )}
@@ -569,67 +557,59 @@ export default function Dashboard() {
         {/* Call Options Modal */}
         {showCallOptions && selectedUser && (
           <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-            <div className="neumorph-panel p-5 max-w-sm w-full">
-              <div className="flex justify-between items-center mb-3">
+            <div className="bg-[#2b2b2b] rounded-2xl p-6 max-w-sm w-full">
+              <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-bold text-white">Connect with {selectedUser.display_name}</h3>
-                <button onClick={() => setShowCallOptions(false)} className="neumorph-icon p-1.5">
-                  <X className="h-4 w-4" />
+                <button onClick={() => setShowCallOptions(false)} className="text-white/70 hover:text-white">
+                  <X className="h-5 w-5" />
                 </button>
               </div>
               <p className="text-sm text-[#F5F5F5]/70 mb-5">Tell‑number: <span className="text-[#13a1ff]">{selectedUser.tell_number}</span></p>
-              <div className="grid grid-cols-3 gap-2">
-                <button onClick={startTextChat} className="neumorph-btn-primary flex flex-col items-center gap-1 py-3 text-xs" style={{ background: '#13a1ff' }}>
-                  <MessageSquare className="h-5 w-5" />
-                  <span>Text</span>
-                </button>
-                <button onClick={startVoiceCall} className="neumorph-btn-primary flex flex-col items-center gap-1 py-3 text-xs" style={{ background: '#13a1ff' }}>
-                  <img src="/tell-icons/voice.png" alt="" className="h-5 w-5" />
-                  <span>Voice</span>
-                </button>
-                <button onClick={startVideoCall} className="neumorph-btn-primary flex flex-col items-center gap-1 py-3 text-xs" style={{ background: '#13a1ff' }}>
-                  <img src="/tell-icons/video.png" alt="" className="h-5 w-5" />
-                  <span>Video</span>
-                </button>
+              <div className="grid grid-cols-3 gap-3">
+                <button onClick={startTextChat} className="flex flex-col items-center gap-2 py-3 rounded-xl bg-[#812505] text-white hover:bg-[#535150] transition text-xs">Text</button>
+                <button onClick={startVoiceCall} className="flex flex-col items-center gap-2 py-3 rounded-xl bg-[#812505] text-white hover:bg-[#535150] transition text-xs">Voice</button>
+                <button onClick={startVideoCall} className="flex flex-col items-center gap-2 py-3 rounded-xl bg-[#812505] text-white hover:bg-[#535150] transition text-xs">Video</button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Chat View */}
+        {/* Chat Box with INNER SCROLL ONLY */}
         {selectedConnection && selectedUser && (
-          <div className="neumorph-panel flex flex-col h-[450px] overflow-hidden mb-5">
-            <div className="p-3 border-b border-[#13a1ff]/20">
-              <div className="flex items-center justify-between flex-wrap gap-2">
+          <>
+            <div className="w-full mb-3">
+              <div className="flex items-center justify-between pb-2 border-b border-white/20">
                 <div>
                   <h2 className="text-base font-bold text-white">{selectedUser.display_name}</h2>
-                  <p className="text-xs text-[#F5F5F5]/60">{selectedUser.tell_number}</p>
+                  <p className="text-xs text-white/50">{selectedUser.tell_number}</p>
                 </div>
-                <div className="flex gap-1">
-                  <button onClick={() => setShowClearModal(true)} className="neumorph-icon p-2" title="Clear chat">
-                    <Trash2 className="h-4 w-4 text-[#cd5126]" />
+                <div className="flex gap-2">
+                  <button onClick={() => setShowClearModal(true)} className="text-white/50 hover:text-[#cd5126]">
+                    <Trash2 className="h-4 w-4" />
                   </button>
-                  <button onClick={startVoiceCall} className="neumorph-icon p-2" title="Voice call">
+                  <button onClick={startVoiceCall} className="text-white/50 hover:text-white">
                     <img src="/tell-icons/voice.png" alt="" className="h-4 w-4" />
                   </button>
-                  <button onClick={startVideoCall} className="neumorph-icon p-2" title="Video call">
+                  <button onClick={startVideoCall} className="text-white/50 hover:text-white">
                     <img src="/tell-icons/video.png" alt="" className="h-4 w-4" />
                   </button>
                 </div>
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-2">
+            {/* INNER SCROLLABLE CHAT BOX */}
+            <div ref={chatContainerRef} className="w-full h-[400px] overflow-y-auto rounded-xl bg-[#1f1f1f] p-4 mb-3 shadow-inner">
               {(messages[selectedConnection] || []).length === 0 ? (
-                <div className="text-center py-8">
-                  <MessageSquare className="h-8 w-8 text-[#13a1ff]/30 mx-auto mb-2" />
-                  <p className="text-sm text-[#F5F5F5]/50">No messages yet</p>
+                <div className="text-center py-10">
+                  <MessageSquare className="h-8 w-8 text-white/20 mx-auto mb-2" />
+                  <p className="text-sm text-white/40">No messages yet</p>
                 </div>
               ) : (
                 (messages[selectedConnection] || []).map((msg, idx) => {
                   const isOwn = msg.sender_tell === user?.tell_number
                   return (
-                    <div key={idx} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[80%] rounded-xl px-3 py-1.5 text-sm ${isOwn ? 'bg-[#13a1ff] text-white' : 'bg-[#2C2C2C] text-white'}`}>
+                    <div key={idx} className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-2`}>
+                      <div className={`max-w-[75%] rounded-xl px-3 py-1.5 text-sm ${isOwn ? 'bg-[#13a1ff] text-white' : 'bg-[#2b2b2b] text-white'}`}>
                         <p className="break-words">{msg.message}</p>
                         <p className="text-[9px] opacity-60 mt-0.5 text-right">
                           {new Date(msg.sent_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -642,7 +622,8 @@ export default function Dashboard() {
               <div ref={messagesEndRef} />
             </div>
 
-            <div className="p-3 border-t border-[#13a1ff]/20">
+            {/* Chat Input */}
+            <div className="w-full">
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -650,50 +631,50 @@ export default function Dashboard() {
                   onChange={(e) => setMessageInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && sendMessage(selectedConnection)}
                   placeholder="Type a message..."
-                  className="flex-1 rounded-xl text-sm px-4 py-2.5"
+                  className="flex-1 rounded-xl text-sm px-4 py-2.5 bg-[#1f1f1f] text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#812505]"
                 />
-                <button onClick={() => sendMessage(selectedConnection)} className="neumorph-btn-primary px-4 py-2.5" style={{ background: '#13a1ff' }}>
+                <button onClick={() => sendMessage(selectedConnection)} className="px-5 py-2.5 rounded-xl bg-[#812505] text-white hover:bg-[#535150] transition">
                   <MessageSquare className="h-4 w-4" />
                 </button>
               </div>
             </div>
-          </div>
+          </>
         )}
 
         {/* Welcome State */}
         {!selectedConnection && (
-          <div className="neumorph-panel p-8 text-center">
+          <div className="text-center py-8">
             <img src="/tell-icons/tell-logo.png" alt="Tell" className="h-16 w-auto mx-auto mb-4 opacity-80" />
             <h3 className="text-xl font-bold mb-2 text-white">Welcome to Tell</h3>
-            <p className="text-sm text-[#F5F5F5]/60 mb-5">Enter a Tell‑number to start</p>
-            <div className="neumorph-panel p-3 inline-block mx-auto">
-              <p className="text-xs text-[#F5F5F5]/60 mb-1">Your sovereign identifier</p>
+            <p className="text-sm text-white/60 mb-5">Enter a Tell‑number to start</p>
+            <div className="bg-[#1f1f1f] rounded-xl p-3 inline-block">
+              <p className="text-xs text-white/50 mb-1">Your sovereign identifier</p>
               <code className="text-xl font-mono font-bold text-[#13a1ff]">{user?.tell_number}</code>
             </div>
           </div>
         )}
 
-        {/* Contact List - Scrollable */}
+        {/* Contacts List */}
         {connections.length > 0 && showContacts && !selectedConnection && (
-          <div className="neumorph-panel mt-4 p-4">
-            <h3 className="text-xs font-semibold text-[#F5F5F5]/60 mb-2 uppercase tracking-wider">Contacts</h3>
+          <div className="w-full mt-4 p-4 bg-[#1f1f1f] rounded-xl">
+            <h3 className="text-xs font-semibold text-white/50 mb-2 uppercase tracking-wider">Your contacts</h3>
             <div className="space-y-1 max-h-48 overflow-y-auto">
               {connections.map((conn) => (
                 <button
                   key={conn.id}
                   onClick={() => selectConnection(conn)}
-                  className="w-full text-left p-2 rounded-lg hover:bg-[#13a1ff]/10 transition flex items-center gap-2"
+                  className="w-full text-left p-2 rounded-lg hover:bg-white/10 transition flex items-center gap-2"
                 >
                   {conn.otherAvatar ? (
-                    <img src={conn.otherAvatar} alt="" className="w-8 h-8 rounded-full object-cover" />
+                    <img src={conn.otherAvatar} alt="" className="w-7 h-7 rounded-full object-cover" />
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1E2A78] to-[#13a1ff] flex items-center justify-center text-sm font-bold text-white">
+                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#1E2A78] to-[#13a1ff] flex items-center justify-center text-xs font-bold text-white">
                       {conn.otherName.charAt(0).toUpperCase()}
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-white text-sm truncate">{conn.otherName}</div>
-                    <div className="text-xs text-[#F5F5F5]/50">{conn.otherTell}</div>
+                    <div className="text-[10px] text-white/50">{conn.otherTell}</div>
                   </div>
                   {activeCall?.id === conn.id && (
                     <div className="text-xs text-[#13a1ff] flex items-center gap-1">
@@ -705,15 +686,16 @@ export default function Dashboard() {
             </div>
           </div>
         )}
-      </div>
 
-      <ClearChatModal
-        isOpen={showClearModal}
-        onClose={() => setShowClearModal(false)}
-        onClearSingle={clearSingleChat}
-        onClearAll={clearAllChats}
-        connectionName={selectedUser?.display_name}
-      />
+        {/* Clear Chat Modal */}
+        <ClearChatModal
+          isOpen={showClearModal}
+          onClose={() => setShowClearModal(false)}
+          onClearSingle={clearSingleChat}
+          onClearAll={clearAllChats}
+          connectionName={selectedUser?.display_name}
+        />
+      </div>
 
       <CallPanel />
       <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => {
